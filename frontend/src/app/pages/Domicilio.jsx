@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { DeliverySection } from "../components/DeliverySection";
+import { TrackOrder } from "../components/TrackOrder";
 
 
 const PageWrapper = styled.div`
@@ -45,7 +46,7 @@ const NoticeBanner = styled.div`
 
 
 
-export function Domicilio() {
+export function Domicilio({ cart, setCart }) {
   return (
     <PageWrapper>
      
@@ -58,12 +59,16 @@ export function Domicilio() {
       </IntroBox>
 
       
-      <DeliverySection />
+      <DeliverySection cart={cart} setCart={setCart} />
 
-    
+
       <NoticeBanner>
         ⚠️ Los pedidos fuera de la zona urbana pueden tener un recargo adicional de $2.00.
       </NoticeBanner>
+
+      <div style={{ width: "100%", marginTop: "3rem" }}>
+        <TrackOrder />
+      </div>
     </PageWrapper>
   );
 }

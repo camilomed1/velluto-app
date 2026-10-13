@@ -14,8 +14,15 @@ import { Contacto } from "./pages/Contacto";
 import { Sabores } from "./pages/Sabores";
 import { Domicilio } from "./pages/Domicilio";
 import { Ordenar } from "./pages/Ordenar";
-import { Recibo } from "./pages/Recibo"; 
-import { Chatbot } from "./components/Chatbot"; 
+import { Recibo } from "./pages/Recibo";
+import { Login } from "./pages/Login";
+import { Registro } from "./pages/Registro";
+import { MisPedidos } from "./pages/MisPedidos";
+import { Admin } from "./pages/Admin";
+import { Chatbot } from "./components/Chatbot";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
+import { ProductsProvider } from "./context/ProductsContext";
 
 const GlobalStyle = createGlobalStyle`
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -54,6 +61,8 @@ export default function App() {
 
   return (
     <ThemeProvider theme={theme}>
+      <AuthProvider>
+      <ProductsProvider>
       <Router>
         <GlobalStyle />
         <AppContainer>
@@ -66,13 +75,18 @@ export default function App() {
                 <Route path="/nosotros" element={<Nosotros />} />
                 <Route path="/contacto" element={<Contacto />} />
                 <Route path="/sabores" element={<Sabores />} />
-                <Route path="/domicilio" element={<Domicilio />} />
+                <Route path="/domicilio" element={<Domicilio cart={cart} setCart={setCart} />} />
                 
                
                 <Route path="/ordenar" element={<Ordenar cart={cart} setCart={setCart} />} />
                 
               
-                <Route path="/recibo" element={<Recibo cart={cart} setCart={setCart} />} />
+                <Route path="/recibo" element={<Recibo />} />
+
+                <Route path="/login" element={<Login />} />
+                <Route path="/registro" element={<Registro />} />
+                <Route path="/mis-pedidos" element={<ProtectedRoute><MisPedidos /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
                 
                 <Route path="*" element={<div style={{padding: '50px', textAlign: 'center'}}>Página no encontrada</div>} />
               </Routes>
@@ -83,6 +97,8 @@ export default function App() {
           <Chatbot /> 
         </AppContainer>
       </Router>
+      </ProductsProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

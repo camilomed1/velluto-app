@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
-import { SABORES } from "../../data/sabores.js";
+import { useProducts } from "../context/ProductsContext";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -99,6 +99,7 @@ const FloatingButton = styled.button`
 
 
 export function Chatbot() {
+  const { sabores } = useProducts();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { text: "¡Hola! Bienvenido a Velluto 🍨. Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?", sender: "bot" }
@@ -110,7 +111,7 @@ export function Chatbot() {
   const RESPUESTAS_DEFAULT = {
     "menu": () => {
       let menu = "🍦 *Nuestros Sabores Artesanales* 🍦\n\n";
-      SABORES.forEach(s => menu += `• ${s.name}: $${s.price.toLocaleString()}\n`);
+      sabores.forEach(s => menu += `• ${s.name}: $${s.price.toLocaleString()}\n`);
       menu += "\n¿Cuál te gustaría probar?";
       return menu;
     },

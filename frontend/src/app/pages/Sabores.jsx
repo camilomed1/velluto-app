@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { SABORES } from "../../data/sabores.js";
+import { useProducts } from "../context/ProductsContext";
 
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -158,7 +158,8 @@ export function Sabores() {
 
   const categorias = ["Todos", "Cremosos", "Frutales", "Clásicos", "Premium"];
 
-  const filteredFlavors = SABORES.filter(flavor => {
+  const { sabores } = useProducts();
+  const filteredFlavors = sabores.filter(flavor => {
     const matchesSearch = flavor.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = activeCategory === "Todos" || flavor.category === activeCategory;
     return matchesSearch && matchesCategory;
@@ -201,7 +202,7 @@ export function Sabores() {
 
       <FlavorsGrid>
         {filteredFlavors.map((flavor) => (
-          <div key={flavor.id} className="flavor-item-anim">
+          <div key={flavor._id} className="flavor-item-anim">
             <FlavorItemCard>
               <div className="image-container">
                 <img src={flavor.image} alt={flavor.name} />

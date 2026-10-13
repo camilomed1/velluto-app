@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
+import { createContactRequest } from "../../api/api";
 
 
 import imgContacto from "../../assets/contacto/comiendohelado.jpg"; 
@@ -185,7 +186,31 @@ const ContactInfo = styled.div`
   span { font-weight: 700; }
 `;
 
+const FormMessage = styled.p`
+  margin-top: 1rem;
+  text-align: center;
+  color: white;
+  font-weight: 600;
+`;
+
 export function Contacto() {
+  const [status, setStatus] = useState({ message: "", sending: false });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form));
+
+    setStatus({ message: "", sending: true });
+    try {
+      const res = await createContactRequest(data);
+      form.reset();
+      setStatus({ message: res.message, sending: false });
+    } catch (err) {
+      setStatus({ message: err.message, sending: false });
+    }
+  };
+
   return (
     <ContactHero $bgImage={imgContacto}>
       <FormContainer>
@@ -194,10 +219,10 @@ export function Contacto() {
           <p>¿En qué podemos ayudarte hoy?</p>
         </SectionHeader>
 
-        <form onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={handleSubmit}>
           <FormGroup>
             <label>Nombre Completo</label>
-            <input type="text" placeholder="Ej: Juan Pérez" required />
+            <input type="text" name="nombre" placeholder="Ej: Juan Pérez" required />
           </FormGroup>
 
          
@@ -222,15 +247,18 @@ export function Contacto() {
 
           <FormGroup>
             <label>Correo Electrónico</label>
-            <input type="email" placeholder="tu@email.com" required />
+            <input type="email" name="email" placeholder="tu@email.com" required />
           </FormGroup>
 
           <FormGroup>
             <label>Mensaje</label>
-            <textarea placeholder="Cuéntanos más..." rows={3} required />
+            <textarea name="mensaje" placeholder="Cuéntanos más..." rows={3} required />
           </FormGroup>
 
-          <SendButton type="submit">Enviar Mensaje</SendButton>
+          <SendButton type="submit" disabled={status.sending}>
+            {status.sending ? "Enviando..." : "Enviar Mensaje"}
+          </SendButton>
+          {status.message && <FormMessage>{status.message}</FormMessage>}
         </form>
 
         <ContactInfo>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
+import { trackOrderRequest } from "../../api/api";
 
 const TrackSection = styled.section`
   border-top: 2px solid black;
@@ -84,12 +85,47 @@ const InfoText = styled.div`
 
 
 
+const ResultBox = styled.div`
+  margin-top: 1.5rem;
+  border: 2px solid black;
+  padding: 1rem 1.5rem;
+  background-color: #f3f4f6;
+  text-align: center;
+
+  h3 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #000;
+  }
+
+  p {
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin: 0.25rem 0;
+  }
+
+  strong {
+    text-transform: uppercase;
+    color: #1f2937;
+  }
+`;
+
+const formatCOP = (val) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(val);
+
 export function TrackOrder() {
   const [orderNumber, setOrderNumber] = useState("");
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
 
-  const handleTrack = (e) => {
+  const handleTrack = async (e) => {
     e.preventDefault();
-    alert(`Buscando pedido: ${orderNumber}`);
+    setError("");
+    setResult(null);
+    try {
+      setResult(await trackOrderRequest(orderNumber.trim()));
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -107,7 +143,7 @@ export function TrackOrder() {
               type="text"
               value={orderNumber}
               onChange={(e) => setOrderNumber(e.target.value)}
-              placeholder="Ingresa tu número de pedido (ej: 12345)"
+              placeholder="Ingresa tu número de pedido (ej: VE-12345)"
               required
             />
             <TrackButton type="submit">
@@ -115,9 +151,24 @@ export function TrackOrder() {
             </TrackButton>
           </StyledForm>
 
+          {result && (
+            <ResultBox>
+              <h3>Pedido {result.orderNumber}</h3>
+              <p>Estado: <strong>{result.status}</strong></p>
+              <p>{result.cantidad} {result.cantidad === 1 ? "helado" : "helados"} · Total {formatCOP(result.total)}</p>
+              <p>Realizado el {new Date(result.createdAt).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" })}</p>
+            </ResultBox>
+          )}
+
+          {error && (
+            <ResultBox>
+              <p>{error}</p>
+            </ResultBox>
+          )}
+
           <InfoText>
             <p>Ingresa tu número de pedido para ver el seguimiento</p>
-            <p>Puedes encontrar tu número de pedido en el correo de confirmación</p>
+            <p>Puedes encontrar tu número de pedido en tu recibo o en "Mis pedidos"</p>
           </InfoText>
         </FormBox>
       </Container>

@@ -1,6 +1,6 @@
 import React from "react";
 import styled, { createGlobalStyle } from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 const PrintStyles = createGlobalStyle`
   @media print {
@@ -182,18 +182,18 @@ const Button = styled.button`
   &:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 `;
 
-export function Recibo({ cart, setCart }) {
+export function Recibo() {
   const navigate = useNavigate();
-  const ENVIO = 5000;
-  const subtotal = cart.reduce((acc, item) => acc + item.finalPrice, 0);
-  const totalGeneral = subtotal + ENVIO;
+  // La orden guardada en el backend llega desde la página Domicilio
+  const order = useLocation().state?.order;
 
   const handleFinish = () => {
-    setCart([]);
     navigate("/");
   };
 
-  if (cart.length === 0) return null;
+  if (!order) return <Navigate to="/ordenar" replace />;
+
+  const fecha = new Date(order.createdAt);
 
   return (
     <>
@@ -207,11 +207,11 @@ export function Recibo({ cart, setCart }) {
 
           <InfoBar>
             <div>NEIVA, HUILA</div>
-            <div>{new Date().toLocaleDateString()} | {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            <div>{fecha.toLocaleDateString()} | {fecha.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
           </InfoBar>
 
           <ItemsList>
-            {cart.map((item, idx) => (
+            {order.items.map((item, idx) => (
               <ReceiptItem key={idx}>
                 <div className="main-info">
                   <strong>1x Helado en {item.base}</strong>
@@ -220,7 +220,7 @@ export function Recibo({ cart, setCart }) {
                     <span>+ {item.toppings.map(t => t.name).join(", ")}</span>
                   )}
                 </div>
-                <div className="price">${item.finalPrice.toLocaleString()}</div>
+                <div className="price">${item.price.toLocaleString()}</div>
               </ReceiptItem>
             ))}
           </ItemsList>
@@ -229,16 +229,16 @@ export function Recibo({ cart, setCart }) {
           
           <SummaryRow>
             <span>Subtotal</span>
-            <span>${subtotal.toLocaleString()}</span>
+            <span>${order.subtotal.toLocaleString()}</span>
           </SummaryRow>
           <SummaryRow>
             <span>Envío Premium</span>
-            <span>${ENVIO.toLocaleString()}</span>
+            <span>${order.shippingFee.toLocaleString()}</span>
           </SummaryRow>
-          
+
           <SummaryRow $isTotal>
             <span>TOTAL</span>
-            <span>${totalGeneral.toLocaleString()}</span>
+            <span>${order.total.toLocaleString()}</span>
           </SummaryRow>
 
           <Stamp>
@@ -246,7 +246,8 @@ export function Recibo({ cart, setCart }) {
           </Stamp>
 
           <div style={{ textAlign: 'center', color: '#a0a0a0', fontSize: '0.7rem' }}>
-            <p style={{ fontWeight: 'bold' }}>Orden #VE-{Math.floor(1000 + Math.random() * 9000)}</p>
+            <p style={{ fontWeight: 'bold' }}>Orden #{order.orderNumber}</p>
+            <p>Entrega en: {order.delivery.direccion}</p>
             <p>Gracias por apoyar lo artesanal.</p>
           </div>
 

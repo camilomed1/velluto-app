@@ -1,4 +1,8 @@
+import { useState } from "react";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { createOrderRequest } from "../../api/api";
 
 
 
@@ -124,9 +128,58 @@ const SubmitButton = styled.button`
     background: ${({ theme }) => theme.colors.dark};
   }
 `;
+const CartSummary = styled.p`
+  color: ${({ theme }) => theme.colors.dark};
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+`;
+
+const FormMessage = styled.p`
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.primary};
+`;
 // --- Componente ---
 
-export function DeliverySection() {
+const formatCOP = (val) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(val);
+
+export function DeliverySection({ cart = [], setCart }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [form, setForm] = useState({ direccion: "", telefono: "", notas: "" });
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const subtotal = cart.reduce((acc, item) => acc + item.finalPrice, 0);
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (cart.length === 0) return navigate("/ordenar");
+    if (!user) return navigate("/login", { state: { from: "/domicilio" } });
+
+    setSending(true);
+    setError("");
+    try {
+      const order = await createOrderRequest({
+        items: cart.map((item) => ({
+          base: item.baseId,
+          flavors: item.flavorIds,
+          toppings: item.toppings.map((t) => t._id),
+        })),
+        delivery: form,
+      });
+      setCart([]);
+      navigate("/recibo", { state: { order } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <DeliverySectionWrapper>
       <Container>
@@ -150,26 +203,34 @@ export function DeliverySection() {
         <FormContainer>
           <h3>Solicita tu pedido</h3>
 
-          <form>
+          <CartSummary>
+            {cart.length > 0
+              ? `Tu carrito: ${cart.length} ${cart.length === 1 ? "helado" : "helados"} (${formatCOP(subtotal)})`
+              : "Tu carrito está vacío. Arma tu helado primero."}
+          </CartSummary>
+
+          <form onSubmit={handleSubmit}>
             <FormGroup>
               <label>Dirección</label>
-              <input type="text" />
+              <input type="text" name="direccion" value={form.direccion} onChange={handleChange} required={cart.length > 0 && !!user} />
             </FormGroup>
 
             <FormGroup>
               <label>Teléfono</label>
-              <input type="text" />
+              <input type="tel" name="telefono" value={form.telefono} onChange={handleChange} required={cart.length > 0 && !!user} />
             </FormGroup>
 
             <FormGroup>
               <label>Notas</label>
-              <textarea rows="3" />
+              <textarea rows="3" name="notas" value={form.notas} onChange={handleChange} />
             </FormGroup>
 
-            <SubmitButton>
-              Pedir ahora
+            <SubmitButton type="submit" disabled={sending}>
+              {sending ? "Enviando..." : cart.length === 0 ? "Ir a Ordenar" : user ? "Pedir ahora" : "Ingresa para pedir"}
             </SubmitButton>
           </form>
+
+          {error && <FormMessage>{error}</FormMessage>}
         </FormContainer>
 
       </Container>

@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom"; 
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { SABORES, BASES, TOPPINGS } from "../../data/sabores";
+import { useProducts } from "../context/ProductsContext";
 
 
 
@@ -199,6 +199,7 @@ export function Ordenar({ cart, setCart }) {
   const [order, setOrder] = useState({ base: "", scoops: 1, flavors: [""], toppings: [] });
   const [notification, setNotification] = useState({ message: "", type: "success" });
   const navigate = useNavigate();
+  const { sabores, bases, toppings } = useProducts();
 
   useGSAP(() => {
     gsap.to(".reveal-section", { opacity: 1, y: 0, stagger: 0.1, duration: 0.8, ease: "power4.out" });
@@ -219,8 +220,8 @@ export function Ordenar({ cart, setCart }) {
   };
 
   const calculateTotal = () => {
-    const baseP = BASES.find(b => b.name === order.base)?.price || 0;
-    const flavorsP = order.flavors.reduce((acc, id) => acc + (SABORES.find(s => s.id === id)?.price || 0), 0);
+    const baseP = bases.find(b => b.name === order.base)?.price || 0;
+    const flavorsP = order.flavors.reduce((acc, id) => acc + (sabores.find(s => s._id === id)?.price || 0), 0);
     const toppingsP = order.toppings.reduce((acc, t) => acc + t.price, 0);
     return baseP + flavorsP + toppingsP;
   };
@@ -228,8 +229,10 @@ export function Ordenar({ cart, setCart }) {
   const handleAddToCart = () => {
     if (!order.base) return showToast("Elige una base 🍦", "error");
     if (order.flavors.some(f => f === "")) return showToast("Completa tus sabores ✨", "error");
-    const flavorNames = order.flavors.map(id => SABORES.find(s => s.id === id).name);
-    setCart([...cart, { ...order, flavors: flavorNames, finalPrice: calculateTotal() }]);
+    const flavorNames = order.flavors.map(id => sabores.find(s => s._id === id).name);
+    const baseId = bases.find(b => b.name === order.base)._id;
+    // Guardamos los nombres para mostrarlos y los IDs para enviarlos al backend
+    setCart([...cart, { ...order, flavors: flavorNames, flavorIds: order.flavors, baseId, finalPrice: calculateTotal() }]);
     showToast("¡Agregado a Velluto! 😋");
     setOrder({ base: "", scoops: 1, flavors: [""], toppings: [] });
   };
@@ -255,8 +258,8 @@ export function Ordenar({ cart, setCart }) {
           <Section className="reveal-section">
             <SectionTitle>01. Base</SectionTitle>
             <OptionsGrid>
-              {BASES.map(b => (
-                <OptionCard key={b.id} $active={order.base === b.name} onClick={() => setOrder({ ...order, base: b.name })}>
+              {bases.map(b => (
+                <OptionCard key={b._id} $active={order.base === b.name} onClick={() => setOrder({ ...order, base: b.name })}>
                   <h3>{b.name}</h3>
                   <span className="extra">+{formatCOP(b.price)}</span>
                 </OptionCard>
@@ -285,7 +288,7 @@ export function Ordenar({ cart, setCart }) {
                 setOrder({...order, flavors: upd});
               }} style={{ width: '100%', padding: '1.2rem', borderRadius: '18px', marginBottom: '1rem', border: '2px solid #f1f2f6', outline: 'none' }}>
                 <option value="">Selecciona sabor #{i + 1}...</option>
-                {SABORES.map(s => <option key={s.id} value={s.id}>{s.name} (+{formatCOP(s.price)})</option>)}
+                {sabores.map(s => <option key={s._id} value={s._id}>{s.name} (+{formatCOP(s.price)})</option>)}
               </select>
             ))}
           </Section>
@@ -293,13 +296,13 @@ export function Ordenar({ cart, setCart }) {
           <Section className="reveal-section">
             <SectionTitle>03. Toppings</SectionTitle>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-              {TOPPINGS.map(t => (
-                <button key={t.id} onClick={() => {
-                  const exists = order.toppings.find(item => item.id === t.id);
-                  setOrder({...order, toppings: exists ? order.toppings.filter(it => it.id !== t.id) : [...order.toppings, t]});
+              {toppings.map(t => (
+                <button key={t._id} onClick={() => {
+                  const exists = order.toppings.find(item => item._id === t._id);
+                  setOrder({...order, toppings: exists ? order.toppings.filter(it => it._id !== t._id) : [...order.toppings, t]});
                 }} style={{ padding: '10px 20px', borderRadius: '30px', border: '1px solid #eee', cursor: 'pointer',
-                background: order.toppings.some(item => item.id === t.id) ? '#e67e22' : 'white', 
-                color: order.toppings.some(item => item.id === t.id) ? 'white' : '#2c3e50' }}>
+                background: order.toppings.some(item => item._id === t._id) ? '#e67e22' : 'white', 
+                color: order.toppings.some(item => item._id === t._id) ? 'white' : '#2c3e50' }}>
                   {t.name}
                 </button>
               ))}
@@ -311,7 +314,7 @@ export function Ordenar({ cart, setCart }) {
           {order.flavors.map((flavorId, index) => (
             flavorId && (
               <ScoopVisual key={`${flavorId}-${index}`} className="scoop-anim" 
-                $color={SABORES.find(s => s.id === flavorId)?.color} 
+                $color={sabores.find(s => s._id === flavorId)?.color} 
                 $index={index} 
               />
             )
@@ -332,7 +335,7 @@ export function Ordenar({ cart, setCart }) {
 
           {cart.length > 0 && (
             <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.8rem' }}>
-              <CheckoutButton onClick={() => navigate("/recibo")}>
+              <CheckoutButton onClick={() => navigate("/domicilio")}>
                 Pagar {cart.length} {cart.length === 1 ? 'helado' : 'helados'} ({formatCOP(cart.reduce((acc, item) => acc + item.finalPrice, 0))})
               </CheckoutButton>
               <ClearCartButton onClick={handleClearCart}>

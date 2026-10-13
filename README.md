@@ -2,14 +2,93 @@
 
 Aplicación web para la heladería Velluto.
 
-- `frontend/`: React + Vite
-- `backend/`: Node.js + Express + MongoDB (Mongoose)
+- `frontend/`: React + Vite + styled-components
+- `backend/`: Node.js + Express + MongoDB (Mongoose), autenticación con JWT en cookie
 
-## Ejecutar
+## Requisitos
 
-```bash
-cd backend && npm install && npm run dev
-cd frontend && npm install && npm run dev
+- Node.js 20 o superior
+- MongoDB corriendo en local (`mongodb://127.0.0.1:27017`)
+
+## Cómo ejecutar
+
+1. Backend
+
+   ```bash
+   cd backend
+   npm install
+   cp .env.example .env
+   npm run seed
+   npm run dev
+   ```
+
+   `npm run seed` carga el menú (sabores, bases y toppings) y crea el usuario administrador
+   definido en `ADMIN_EMAIL` / `ADMIN_PASSWORD` del `.env`. El servidor queda en `http://localhost:4000`.
+
+2. Frontend (en otra terminal)
+
+   ```bash
+   cd frontend
+   npm install
+   cp .env.example .env
+   npm run dev
+   ```
+
+   Abre `http://localhost:5173`.
+
+## Estructura del backend
+
+```
+backend/src/
+├── index.js            # servidor Express, middlewares y rutas
+├── config.js           # variables de entorno
+├── db.js               # conexión a MongoDB
+├── seed.js             # datos iniciales
+├── data/productos.js   # menú inicial
+├── libs/jwt.js         # crear token
+├── middlewares/
+│   ├── validateToken.js  # authRequired: exige sesión
+│   └── isAdmin.js        # adminRequired: exige rol admin
+├── models/             # user, product, order, contact
+├── controllers/        # lógica de cada recurso
+└── routes/             # endpoints
 ```
 
-Copiar `.env.example` a `.env` en cada carpeta y completar los valores.
+## API
+
+Todas las rutas empiezan por `/api`. 🔒 = requiere sesión, 👑 = requiere rol admin.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/register` | Crear cuenta (`username`, `email`, `password`) |
+| POST | `/login` | Iniciar sesión (`email`, `password`) |
+| POST | `/logout` | Cerrar sesión |
+| GET | `/profile` 🔒 | Datos del usuario logueado |
+| GET | `/productos` | Menú disponible. Filtros: `?tipo=sabor\|base\|topping`, `?todos=true` |
+| GET | `/productos/:id` | Un producto |
+| POST | `/productos` 👑 | Crear producto |
+| PUT | `/productos/:id` 👑 | Editar producto (precio, disponible, etc.) |
+| DELETE | `/productos/:id` 👑 | Eliminar producto |
+| POST | `/ordenes` 🔒 | Crear pedido. El backend calcula los precios |
+| GET | `/ordenes/mias` 🔒 | Pedidos del usuario |
+| GET | `/ordenes/seguimiento/:numero` | Estado de un pedido (público) |
+| GET | `/ordenes` 👑 | Todos los pedidos |
+| PUT | `/ordenes/:id/estado` 👑 | Cambiar estado (`pendiente`, `preparando`, `en camino`, `entregado`, `cancelado`) |
+| POST | `/contacto` | Enviar mensaje del formulario de contacto |
+| GET | `/contacto` 👑 | Ver mensajes |
+| PUT | `/contacto/:id` 👑 | Marcar mensaje como leído (`leido`) |
+
+Ejemplo de `POST /api/ordenes`:
+
+```json
+{
+  "items": [
+    { "base": "<id base>", "flavors": ["<id sabor>", "<id sabor>"], "toppings": ["<id topping>"] }
+  ],
+  "delivery": { "direccion": "Calle 1 # 2-3", "telefono": "3001234567", "notas": "" }
+}
+```
+
+## Flujo del pedido en el frontend
+
+Ordenar → Pagar → Domicilio (si no hay sesión pide ingresar) → Pedir ahora → Recibo con número real → seguimiento en Domicilio o en "Mis pedidos".

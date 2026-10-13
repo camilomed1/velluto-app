@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { Hero } from "../components/Hero";
 import { FlavorCard } from "../components/FlavorCard";
-import { SABORES } from "../../data/sabores.js";
+import { useProducts } from "../context/ProductsContext";
 
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -194,7 +194,8 @@ const InfoCard = styled.div`
 `;
 
 export function Home() {
-  const destacados = SABORES.slice(0, 6);
+  const { sabores } = useProducts();
+  const destacados = sabores.slice(0, 6);
   const navigate = useNavigate();
 
   useGSAP(() => {
@@ -243,7 +244,7 @@ export function Home() {
               }}
             >
               {destacados.map((flavor) => (
-                <SwiperSlide key={flavor.id}>
+                <SwiperSlide key={flavor._id}>
                   <FlavorCard
                     name={flavor.name}
                     description={flavor.description}

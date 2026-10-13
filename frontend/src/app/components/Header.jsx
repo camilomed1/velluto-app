@@ -1,5 +1,6 @@
 import styled from 'styled-components';
-import { Link, useLocation } from 'react-router-dom'; 
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const HeaderContainer = styled.header`
   width: 100%;
@@ -64,6 +65,23 @@ const NavLink = styled(Link)`
   }
 `;
 
+// Mismo estilo que NavLink pero como botón (para "Salir")
+const NavButton = styled.button`
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.text};
+  transition: 0.25s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
 const SpecialLink = styled(Link)`
   padding: 0.65rem 1.2rem;
   border-radius: ${({ theme }) => theme.radius.md};
@@ -83,6 +101,14 @@ const SpecialLink = styled(Link)`
 export function Header() {
   
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAdmin, logout } = useAuth();
+
+  // Primero salimos de la página protegida para que no nos mande a /login
+  const handleLogout = () => {
+    navigate("/");
+    logout();
+  };
 
   
   const isActive = (path) => location.pathname === path;
@@ -101,6 +127,17 @@ export function Header() {
           <NavLink to="/nosotros" $active={isActive('/nosotros')}>Nosotros</NavLink>
           <NavLink to="/sabores" $active={isActive('/sabores')}>Sabores</NavLink>
           <NavLink to="/contacto" $active={isActive('/contacto')}>Contacto</NavLink>
+
+          {user ? (
+            <>
+              {isAdmin
+                ? <NavLink to="/admin" $active={isActive('/admin')}>Admin</NavLink>
+                : <NavLink to="/mis-pedidos" $active={isActive('/mis-pedidos')}>Mis pedidos</NavLink>}
+              <NavButton onClick={handleLogout}>Salir</NavButton>
+            </>
+          ) : (
+            <NavLink to="/login" $active={isActive('/login') || isActive('/registro')}>Ingresar</NavLink>
+          )}
         </Nav>
 
         <SpecialLink to="/ordenar">Ordenar</SpecialLink>

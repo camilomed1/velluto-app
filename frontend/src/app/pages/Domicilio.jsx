@@ -63,7 +63,7 @@ export function Domicilio({ cart, setCart }) {
 
 
       <NoticeBanner>
-        ⚠️ Los pedidos fuera de la zona urbana pueden tener un recargo adicional de $2.00.
+        ⚠️ El domicilio cuesta $5.000 dentro de Neiva. Los pedidos fuera de la zona urbana pueden tener un recargo adicional.
       </NoticeBanner>
 
       <div style={{ width: "100%", marginTop: "3rem" }}>

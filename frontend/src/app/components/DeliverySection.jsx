@@ -20,6 +20,12 @@ const Container = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 4rem;
   align-items: center;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: 0 1.5rem;
+  }
 `;
 
 
@@ -37,7 +43,7 @@ const Eyebrow = styled.span`
 `;
 
 const Title = styled.h2`
-  font-size: 3rem;
+  font-size: clamp(2.2rem, 6vw, 3rem);
   line-height: 1.1;
   font-family: ${({ theme }) => theme.fonts.title};
 `;

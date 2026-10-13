@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +36,49 @@ const Nav = styled.nav`
   display: flex;
   align-items: center;
   gap: 1.4rem;
+
+  /* En pantallas pequeñas el menú se despliega debajo del header */
+  @media (max-width: 900px) {
+    display: ${({ $open }) => ($open ? 'flex' : 'none')};
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.2rem;
+    padding: 1.5rem 2rem;
+    background: ${({ theme }) => theme.colors.background};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+    box-shadow: ${({ theme }) => theme.shadow.soft};
+  }
+`;
+
+const Right = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const MenuButton = styled.button`
+  display: none;
+  background: none;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.sm};
+  padding: 0.45rem 0.7rem;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: ${({ theme }) => theme.colors.text};
+  cursor: pointer;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+
+  @media (max-width: 900px) {
+    display: block;
+  }
 `;
 
 const NavLink = styled(Link)`
@@ -103,6 +147,12 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Cerrar el menú del celular al cambiar de página
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   // Primero salimos de la página protegida para que no nos mande a /login
   const handleLogout = () => {
@@ -121,7 +171,7 @@ export function Header() {
           <h2 style={{ margin: 0 }}>Velluto</h2>
         </LogoBox>
 
-        <Nav>
+        <Nav $open={menuOpen}>
           {/* 2. Pasamos la prop $active comparando la ruta */}
           <NavLink to="/" $active={isActive('/')}>Inicio</NavLink>
           <NavLink to="/nosotros" $active={isActive('/nosotros')}>Nosotros</NavLink>
@@ -140,7 +190,12 @@ export function Header() {
           )}
         </Nav>
 
-        <SpecialLink to="/ordenar">Ordenar</SpecialLink>
+        <Right>
+          <SpecialLink to="/ordenar">Ordenar</SpecialLink>
+          <MenuButton onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menú" aria-expanded={menuOpen}>
+            {menuOpen ? '✕' : '☰'}
+          </MenuButton>
+        </Right>
       </Wrapper>
     </HeaderContainer>
   );

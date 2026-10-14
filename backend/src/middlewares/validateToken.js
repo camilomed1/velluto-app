@@ -14,3 +14,14 @@ export const authRequired = (req, res, next) => {
         next()
     })
 }
+
+// Igual que authRequired pero deja pasar sin sesión (para pedir como invitado)
+export const authOptional = (req, res, next) => {
+    const { token } = req.cookies
+    if (!token) return next()
+
+    jwt.verify(token, TOKEN_SECRET, (err, user) => {
+        if (!err) req.user = user
+        next()
+    })
+}

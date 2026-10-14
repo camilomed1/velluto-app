@@ -95,7 +95,7 @@ export function OrderCard({ order, extra }) {
       <Bottom>
         <div>
           Entrega en {order.delivery.direccion}
-          {order.delivery.notas && ` · ${order.delivery.notas}`}
+          {order.delivery.comentario && ` · ${order.delivery.comentario}`}
         </div>
         <div className="total">Total {formatCOP(order.total)}</div>
       </Bottom>

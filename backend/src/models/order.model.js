@@ -7,11 +7,11 @@ const orderSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  // Relación con el Usuario
+  // Relación con el Usuario (null si el pedido se hizo sin cuenta)
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    default: null
   },
   // Cada item es un helado armado en la página "Ordenar"
   items: [
@@ -28,9 +28,10 @@ const orderSchema = new mongoose.Schema({
     }
   ],
   delivery: {
+    nombre: { type: String, required: true },
     direccion: { type: String, required: true },
     telefono: { type: String, required: true },
-    notas: { type: String, default: '' }
+    comentario: { type: String, default: '' }
   },
   subtotal: {
     type: Number,

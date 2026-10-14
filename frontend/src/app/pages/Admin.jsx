@@ -221,7 +221,7 @@ function PedidosTab() {
             extra={
               <Extra>
                 <div>
-                  Cliente: <strong>{order.user?.username || "Usuario eliminado"}</strong> · {order.user?.email} · Tel: {order.delivery.telefono}
+                  Cliente: <strong>{order.delivery.nombre || order.user?.username}</strong> · Tel: {order.delivery.telefono} · {order.user ? `Cuenta: ${order.user.email}` : "Sin cuenta"}
                 </div>
                 <Select value={order.status} onChange={(e) => changeStatus(order._id, e.target.value)}>
                   {ESTADOS.map((s) => (

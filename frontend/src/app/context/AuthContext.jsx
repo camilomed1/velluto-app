@@ -35,7 +35,8 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin: user?.rol === "admin", signup, signin, logout }}>
+    // setUser se usa en "Mi cuenta" para actualizar los datos después de guardar
+    <AuthContext.Provider value={{ user, setUser, loading, isAdmin: user?.rol === "admin", signup, signin, logout }}>
       {children}
     </AuthContext.Provider>
   );

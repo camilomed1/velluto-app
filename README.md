@@ -60,16 +60,21 @@ Todas las rutas empiezan por `/api`. 🔒 = requiere sesión, 👑 = requiere ro
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/register` | Crear cuenta (`username`, `email`, `password`) |
+| POST | `/register` | Crear cuenta (`username`, `email`, `password`, `telefono` opcional) |
 | POST | `/login` | Iniciar sesión (`email`, `password`) |
 | POST | `/logout` | Cerrar sesión |
-| GET | `/profile` 🔒 | Datos del usuario logueado |
+| GET | `/profile` 🔒 | Datos del usuario logueado (incluye teléfono y direcciones) |
+| PUT | `/profile` 🔒 | Editar nombre y teléfono |
+| PUT | `/profile/password` 🔒 | Cambiar contraseña (`passwordActual`, `passwordNueva`) |
+| POST | `/profile/direcciones` 🔒 | Agregar dirección (`alias`, `direccion`, `comentario`, `principal`) |
+| PUT | `/profile/direcciones/:id` 🔒 | Editar dirección o marcarla como principal |
+| DELETE | `/profile/direcciones/:id` 🔒 | Eliminar dirección |
 | GET | `/productos` | Menú disponible. Filtros: `?tipo=sabor\|base\|topping`, `?todos=true` |
 | GET | `/productos/:id` | Un producto |
 | POST | `/productos` 👑 | Crear producto |
 | PUT | `/productos/:id` 👑 | Editar producto (precio, disponible, etc.) |
 | DELETE | `/productos/:id` 👑 | Eliminar producto |
-| POST | `/ordenes` 🔒 | Crear pedido. El backend calcula los precios |
+| POST | `/ordenes` | Crear pedido, con o sin cuenta. El backend calcula los precios |
 | GET | `/ordenes/mias` 🔒 | Pedidos del usuario |
 | GET | `/ordenes` 👑 | Todos los pedidos |
 | PUT | `/ordenes/:id/estado` 👑 | Cambiar estado (`pendiente`, `preparando`, `en camino`, `entregado`, `cancelado`) |
@@ -81,10 +86,12 @@ Ejemplo de `POST /api/ordenes`:
   "items": [
     { "base": "<id base>", "flavors": ["<id sabor>", "<id sabor>"], "toppings": ["<id topping>"] }
   ],
-  "delivery": { "direccion": "Calle 1 # 2-3", "telefono": "3001234567", "notas": "" }
+  "delivery": { "nombre": "Juan Pérez", "direccion": "Calle 1 # 2-3", "telefono": "3001234567", "comentario": "" }
 }
 ```
 
 ## Flujo del pedido en el frontend
 
-Ordenar → Pagar → Domicilio (si no hay sesión pide ingresar) → Pedir ahora → Recibo con número real. Los pedidos anteriores se ven en "Mis pedidos".
+Ordenar → Pagar → Domicilio (nombre, teléfono, dirección y comentario) → Pedir ahora → Recibo con número real.
+
+No hace falta cuenta para pedir. Con cuenta, el formulario se llena solo y se puede elegir una dirección guardada. En "Mi cuenta" el usuario edita sus datos, sus direcciones y ve sus pedidos.

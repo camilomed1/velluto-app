@@ -19,7 +19,7 @@ export function Login() {
     setError("");
     try {
       const user = await signin(form);
-      navigate(from || (user.rol === "admin" ? "/admin" : "/mis-pedidos"), { replace: true });
+      navigate(from || (user.rol === "admin" ? "/admin" : "/mi-cuenta"), { replace: true });
     } catch (err) {
       setError(err.message);
       setSending(false);

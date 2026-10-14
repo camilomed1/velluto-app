@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react"; 
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import styled, { createGlobalStyle, ThemeProvider } from "styled-components";
 import theme from "./theme";
 
@@ -16,7 +16,7 @@ import { Ordenar } from "./pages/Ordenar";
 import { Recibo } from "./pages/Recibo";
 import { Login } from "./pages/Login";
 import { Registro } from "./pages/Registro";
-import { MisPedidos } from "./pages/MisPedidos";
+import { MiCuenta } from "./pages/MiCuenta";
 import { Admin } from "./pages/Admin";
 import { Chatbot } from "./components/Chatbot";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -85,7 +85,8 @@ export default function App() {
 
                 <Route path="/login" element={<Login />} />
                 <Route path="/registro" element={<Registro />} />
-                <Route path="/mis-pedidos" element={<ProtectedRoute><MisPedidos /></ProtectedRoute>} />
+                <Route path="/mi-cuenta" element={<ProtectedRoute><MiCuenta /></ProtectedRoute>} />
+                <Route path="/mis-pedidos" element={<Navigate to="/mi-cuenta?tab=pedidos" replace />} />
                 <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
                 
                 <Route path="*" element={<div style={{padding: '50px', textAlign: 'center'}}>Página no encontrada</div>} />

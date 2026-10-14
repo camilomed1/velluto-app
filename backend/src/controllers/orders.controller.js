@@ -22,7 +22,7 @@ export const createOrder = async (req, res) => {
     try {
         if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ message: "El carrito está vacío" })
         if (items.length > 20) return res.status(400).json({ message: "Máximo 20 helados por pedido" })
-        if (!delivery?.direccion?.trim() || !delivery?.telefono?.trim()) return res.status(400).json({ message: "La dirección y el teléfono son obligatorios" })
+        if (!delivery?.nombre?.trim() || !delivery?.direccion?.trim() || !delivery?.telefono?.trim()) return res.status(400).json({ message: "Nombre, dirección y teléfono son obligatorios" })
 
         const productos = await Product.find({ disponible: true })
         const buscar = (id, tipo) => productos.find(p => p._id.toString() === id && p.tipo === tipo)
@@ -57,12 +57,14 @@ export const createOrder = async (req, res) => {
 
         const newOrder = new Order({
             orderNumber: await generarNumeroOrden(),
-            user: req.user.id,
+            // Si no hay sesión el pedido queda como invitado (sin usuario)
+            user: req.user?.id || null,
             items: itemsOrden,
             delivery: {
+                nombre: delivery.nombre.trim(),
                 direccion: delivery.direccion.trim(),
                 telefono: delivery.telefono.trim(),
-                notas: delivery.notas?.trim() || ''
+                comentario: delivery.comentario?.trim() || ''
             },
             subtotal,
             shippingFee: COSTO_ENVIO,

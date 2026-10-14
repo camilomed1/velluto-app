@@ -7,7 +7,7 @@ export function Registro() {
   const { signup } = useAuth();
   const navigate = useNavigate();
   const from = useLocation().state?.from;
-  const [form, setForm] = useState({ username: "", email: "", password: "" });
+  const [form, setForm] = useState({ username: "", email: "", telefono: "", password: "" });
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -19,7 +19,8 @@ export function Registro() {
     setError("");
     try {
       await signup(form);
-      navigate(from || "/ordenar", { replace: true });
+      // Sin página de origen lo llevamos a guardar su primera dirección
+      navigate(from || "/mi-cuenta?tab=direcciones", { replace: true });
     } catch (err) {
       setError(err.message);
       setSending(false);
@@ -44,6 +45,11 @@ export function Registro() {
         <FormGroup>
           <label>Correo Electrónico</label>
           <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="tu@email.com" required />
+        </FormGroup>
+
+        <FormGroup>
+          <label>Teléfono (opcional)</label>
+          <input type="tel" name="telefono" value={form.telefono} onChange={handleChange} placeholder="Ej: 300 123 4567" />
         </FormGroup>
 
         <FormGroup>

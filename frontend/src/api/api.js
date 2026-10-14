@@ -25,6 +25,13 @@ export const loginRequest = (user) => request("/login", { method: "POST", body: 
 export const logoutRequest = () => request("/logout", { method: "POST" });
 export const profileRequest = () => request("/profile");
 
+// Mi cuenta
+export const updateProfileRequest = (data) => request("/profile", { method: "PUT", body: data });
+export const changePasswordRequest = (data) => request("/profile/password", { method: "PUT", body: data });
+export const addAddressRequest = (address) => request("/profile/direcciones", { method: "POST", body: address });
+export const updateAddressRequest = (id, address) => request(`/profile/direcciones/${id}`, { method: "PUT", body: address });
+export const deleteAddressRequest = (id) => request(`/profile/direcciones/${id}`, { method: "DELETE" });
+
 // Productos
 export const getProductsRequest = (todos = false) => request(`/productos${todos ? "?todos=true" : ""}`);
 export const createProductRequest = (product) => request("/productos", { method: "POST", body: product });

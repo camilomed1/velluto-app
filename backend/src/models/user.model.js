@@ -22,7 +22,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['cliente', 'admin'],
       default: 'cliente'
-    }
+    },
+    telefono: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    // Direcciones guardadas para no escribirlas en cada pedido
+    direcciones: [
+      {
+        alias: { type: String, required: true, trim: true },
+        direccion: { type: String, required: true, trim: true },
+        comentario: { type: String, trim: true, default: '' },
+        principal: { type: Boolean, default: false }
+      }
+    ]
   },
   {
     timestamps: true

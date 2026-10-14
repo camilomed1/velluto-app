@@ -8,17 +8,19 @@ const cookieOptions = {
 }
 
 // Lo que le devolvemos al frontend (nunca la contraseña)
-const userResponse = (user) => ({
+export const userResponse = (user) => ({
     id: user._id,
     username: user.username,
     email: user.email,
     rol: user.rol,
+    telefono: user.telefono,
+    direcciones: user.direcciones,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
 })
 
 export const register = async (req, res) => {
-    const { email, password, username } = req.body
+    const { email, password, username, telefono } = req.body
 
     try {
         if (!email || !password || !username) return res.status(400).json({ message: "Todos los campos son obligatorios" })
@@ -32,7 +34,8 @@ export const register = async (req, res) => {
         const newUser = new User({
             username,
             email,
-            password: passwordHash
+            password: passwordHash,
+            telefono: telefono?.trim() || ""
         })
 
         const userSaved = await newUser.save()

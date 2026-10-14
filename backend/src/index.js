@@ -6,6 +6,7 @@ import { connectDB } from './db.js'
 import { PORT, FRONTEND_URL } from './config.js'
 
 import authRoutes from './routes/auth.routes.js'
+import userRoutes from './routes/user.routes.js'
 import productsRoutes from './routes/products.routes.js'
 import ordersRoutes from './routes/orders.routes.js'
 
@@ -23,6 +24,7 @@ app.use(cookieParser())
 connectDB()
 
 app.use("/api", authRoutes)
+app.use("/api", userRoutes)
 app.use("/api", productsRoutes)
 app.use("/api", ordersRoutes)
 

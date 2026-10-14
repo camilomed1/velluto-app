@@ -286,13 +286,15 @@ export function Recibo() {
 
           <SectionLabel>Entrega</SectionLabel>
           <DeliveryBox>
+            {order.delivery.nombre}
+            <br />
             {order.delivery.direccion}
             <br />
             <span>Tel: {order.delivery.telefono}</span>
-            {order.delivery.notas && (
+            {order.delivery.comentario && (
               <>
                 <br />
-                <span>Notas: {order.delivery.notas}</span>
+                <span>Comentario: {order.delivery.comentario}</span>
               </>
             )}
           </DeliveryBox>

@@ -181,7 +181,7 @@ export function Header() {
             <>
               {isAdmin
                 ? <NavLink to="/admin" $active={isActive('/admin')}>Admin</NavLink>
-                : <NavLink to="/mis-pedidos" $active={isActive('/mis-pedidos')}>Mis pedidos</NavLink>}
+                : <NavLink to="/mi-cuenta" $active={isActive('/mi-cuenta')}>Mi cuenta</NavLink>}
               <NavButton onClick={handleLogout}>Salir</NavButton>
             </>
           ) : (

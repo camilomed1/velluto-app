@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createOrderRequest } from "../../api/api";
+import { addAddressRequest, createOrderRequest } from "../../api/api";
 
 
 
@@ -146,25 +146,110 @@ const FormMessage = styled.p`
   font-weight: 600;
   color: ${({ theme }) => theme.colors.primary};
 `;
+
+const AccountHint = styled.p`
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: ${({ theme }) => theme.colors.dark};
+
+  a {
+    color: ${({ theme }) => theme.colors.primary};
+    font-weight: 700;
+  }
+`;
+
+const AddressList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+`;
+
+const AddressOption = styled.button`
+  text-align: left;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: ${({ theme }) => theme.radius.md};
+  border: 2px solid ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.border)};
+  background: white;
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.2s ease;
+
+  strong {
+    display: block;
+    color: ${({ theme }) => theme.colors.text};
+  }
+
+  span {
+    display: block;
+    font-size: 0.85rem;
+    color: ${({ theme }) => theme.colors.dark};
+  }
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const CheckRow = styled.label`
+  display: flex !important;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 500 !important;
+  cursor: pointer;
+
+  input {
+    width: auto !important;
+    accent-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
 // --- Componente ---
 
 const formatCOP = (val) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(val);
 
+const OTRA = "otra";
+
 export function DeliverySection({ cart = [], setCart }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [form, setForm] = useState({ direccion: "", telefono: "", notas: "" });
+  const { user, setUser } = useAuth();
+  const direcciones = user?.direcciones || [];
+
+  const [form, setForm] = useState({ nombre: "", direccion: "", telefono: "", comentario: "" });
+  // Dirección guardada elegida (su _id) u "otra" para escribir una nueva
+  const [seleccion, setSeleccion] = useState(OTRA);
+  const [guardar, setGuardar] = useState({ activo: false, alias: "" });
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
 
   const subtotal = cart.reduce((acc, item) => acc + item.finalPrice, 0);
+
+  const elegirDireccion = (dir) => {
+    setSeleccion(dir._id);
+    setForm((f) => ({ ...f, direccion: dir.direccion, comentario: dir.comentario || "" }));
+  };
+
+  const elegirOtra = () => {
+    setSeleccion(OTRA);
+    setForm((f) => ({ ...f, direccion: "", comentario: "" }));
+  };
+
+  // Si hay sesión llenamos los datos de la cuenta y elegimos la dirección principal
+  useEffect(() => {
+    if (!user) return;
+    const principal = user.direcciones?.find((d) => d.principal) || user.direcciones?.[0];
+    setForm((f) => ({
+      ...f,
+      nombre: f.nombre || user.username,
+      telefono: f.telefono || user.telefono || "",
+    }));
+    if (principal) elegirDireccion(principal);
+  }, [user?.id]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (cart.length === 0) return navigate("/ordenar");
-    if (!user) return navigate("/login", { state: { from: "/domicilio" } });
 
     setSending(true);
     setError("");
@@ -177,6 +262,17 @@ export function DeliverySection({ cart = [], setCart }) {
         })),
         delivery: form,
       });
+
+      // Guardar la dirección nueva en la cuenta si el usuario lo pidió
+      if (user && seleccion === OTRA && guardar.activo) {
+        const updated = await addAddressRequest({
+          alias: guardar.alias.trim() || "Mi dirección",
+          direccion: form.direccion,
+          comentario: form.comentario,
+        }).catch(() => null);
+        if (updated) setUser(updated);
+      }
+
       setCart([]);
       navigate("/recibo", { state: { order } });
     } catch (err) {
@@ -185,6 +281,8 @@ export function DeliverySection({ cart = [], setCart }) {
       setSending(false);
     }
   };
+
+  const vacio = cart.length === 0;
 
   return (
     <DeliverySectionWrapper>
@@ -210,29 +308,78 @@ export function DeliverySection({ cart = [], setCart }) {
           <h3>Solicita tu pedido</h3>
 
           <CartSummary>
-            {cart.length > 0
+            {!vacio
               ? `Tu carrito: ${cart.length} ${cart.length === 1 ? "helado" : "helados"} (${formatCOP(subtotal)})`
               : "Tu carrito está vacío. Arma tu helado primero."}
           </CartSummary>
 
+          {!user && !vacio && (
+            <AccountHint>
+              ¿Tienes cuenta? <Link to="/login" state={{ from: "/domicilio" }}>Ingresa</Link> para usar tus direcciones guardadas.
+            </AccountHint>
+          )}
+
           <form onSubmit={handleSubmit}>
             <FormGroup>
-              <label>Dirección</label>
-              <input type="text" name="direccion" value={form.direccion} onChange={handleChange} required={cart.length > 0 && !!user} />
+              <label>Nombre</label>
+              <input type="text" name="nombre" value={form.nombre} onChange={handleChange} required={!vacio} />
             </FormGroup>
 
             <FormGroup>
               <label>Teléfono</label>
-              <input type="tel" name="telefono" value={form.telefono} onChange={handleChange} required={cart.length > 0 && !!user} />
+              <input type="tel" name="telefono" value={form.telefono} onChange={handleChange} required={!vacio} />
             </FormGroup>
+
+            {direcciones.length > 0 && (
+              <FormGroup>
+                <label>Dirección de entrega</label>
+                <AddressList>
+                  {direcciones.map((d) => (
+                    <AddressOption type="button" key={d._id} $active={seleccion === d._id} onClick={() => elegirDireccion(d)}>
+                      <strong>{d.alias}{d.principal ? " · Principal" : ""}</strong>
+                      <span>{d.direccion}</span>
+                    </AddressOption>
+                  ))}
+                  <AddressOption type="button" $active={seleccion === OTRA} onClick={elegirOtra}>
+                    <strong>Otra dirección</strong>
+                    <span>Escribir una dirección nueva</span>
+                  </AddressOption>
+                </AddressList>
+              </FormGroup>
+            )}
+
+            {seleccion === OTRA && (
+              <FormGroup>
+                <label>Dirección</label>
+                <input type="text" name="direccion" value={form.direccion} onChange={handleChange} required={!vacio} />
+              </FormGroup>
+            )}
 
             <FormGroup>
-              <label>Notas</label>
-              <textarea rows="3" name="notas" value={form.notas} onChange={handleChange} />
+              <label>Comentario</label>
+              <textarea rows="3" name="comentario" value={form.comentario} onChange={handleChange} placeholder="Ej: Apto 302, timbre dañado..." />
             </FormGroup>
 
+            {user && seleccion === OTRA && !vacio && (
+              <FormGroup>
+                <CheckRow>
+                  <input type="checkbox" checked={guardar.activo} onChange={(e) => setGuardar({ ...guardar, activo: e.target.checked })} />
+                  Guardar esta dirección en mi cuenta
+                </CheckRow>
+                {guardar.activo && (
+                  <input
+                    type="text"
+                    value={guardar.alias}
+                    onChange={(e) => setGuardar({ ...guardar, alias: e.target.value })}
+                    placeholder="Nombre de la dirección (ej: Casa, Trabajo)"
+                    style={{ marginTop: "0.6rem" }}
+                  />
+                )}
+              </FormGroup>
+            )}
+
             <SubmitButton type="submit" disabled={sending}>
-              {sending ? "Enviando..." : cart.length === 0 ? "Ir a Ordenar" : user ? "Pedir ahora" : "Ingresa para pedir"}
+              {sending ? "Enviando..." : vacio ? "Ir a Ordenar" : "Pedir ahora"}
             </SubmitButton>
           </form>
 

@@ -176,7 +176,6 @@ export function Header() {
           <NavLink to="/" $active={isActive('/')}>Inicio</NavLink>
           <NavLink to="/nosotros" $active={isActive('/nosotros')}>Nosotros</NavLink>
           <NavLink to="/sabores" $active={isActive('/sabores')}>Sabores</NavLink>
-          <NavLink to="/contacto" $active={isActive('/contacto')}>Contacto</NavLink>
 
           {user ? (
             <>

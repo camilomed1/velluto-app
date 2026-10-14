@@ -34,11 +34,5 @@ export const deleteProductRequest = (id) => request(`/productos/${id}`, { method
 // Órdenes
 export const createOrderRequest = (order) => request("/ordenes", { method: "POST", body: order });
 export const getMyOrdersRequest = () => request("/ordenes/mias");
-export const trackOrderRequest = (numero) => request(`/ordenes/seguimiento/${encodeURIComponent(numero)}`);
 export const getOrdersRequest = () => request("/ordenes");
 export const updateOrderStatusRequest = (id, status) => request(`/ordenes/${id}/estado`, { method: "PUT", body: { status } });
-
-// Contacto
-export const createContactRequest = (contact) => request("/contacto", { method: "POST", body: contact });
-export const getContactsRequest = () => request("/contacto");
-export const updateContactRequest = (id, leido) => request(`/contacto/${id}`, { method: "PUT", body: { leido } });

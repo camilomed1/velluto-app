@@ -10,7 +10,6 @@ import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { Home } from "./pages/Home";
 import { Nosotros } from "./pages/Nosotros";
-import { Contacto } from "./pages/Contacto";
 import { Sabores } from "./pages/Sabores";
 import { Domicilio } from "./pages/Domicilio";
 import { Ordenar } from "./pages/Ordenar";
@@ -45,6 +44,8 @@ const PageWrapper = ({ children }) => {
   const location = useLocation(); 
 
   useGSAP(() => {
+    // Cada página nueva empieza arriba
+    window.scrollTo(0, 0);
     gsap.fromTo(
       containerRef.current,
       { opacity: 0, y: 20 },
@@ -73,7 +74,6 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/nosotros" element={<Nosotros />} />
-                <Route path="/contacto" element={<Contacto />} />
                 <Route path="/sabores" element={<Sabores />} />
                 <Route path="/domicilio" element={<Domicilio cart={cart} setCart={setCart} />} />
                 

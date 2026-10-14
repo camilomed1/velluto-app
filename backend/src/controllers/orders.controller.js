@@ -86,26 +86,6 @@ export const getMyOrders = async (req, res) => {
     }
 }
 
-// Público: seguimiento por número. No devuelve dirección ni teléfono.
-export const trackOrder = async (req, res) => {
-    try {
-        const numero = req.params.numero.trim().toUpperCase()
-        const order = await Order.findOne({ orderNumber: numero.startsWith('VE-') ? numero : `VE-${numero}` })
-        if (!order) return res.status(404).json({ message: "No encontramos un pedido con ese número" })
-
-        return res.json({
-            orderNumber: order.orderNumber,
-            status: order.status,
-            cantidad: order.items.length,
-            total: order.total,
-            createdAt: order.createdAt,
-            updatedAt: order.updatedAt,
-        })
-    } catch (error) {
-        return res.status(500).json({ message: error.message })
-    }
-}
-
 // Admin: todos los pedidos
 export const getOrders = async (req, res) => {
     try {

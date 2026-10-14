@@ -7,8 +7,6 @@ import {
   createProductRequest,
   updateProductRequest,
   deleteProductRequest,
-  getContactsRequest,
-  updateContactRequest,
 } from "../../api/api";
 import { useProducts } from "../context/ProductsContext";
 import { OrderCard, formatCOP } from "../components/OrderCard";
@@ -371,49 +369,11 @@ function ProductosTab() {
   );
 }
 
-// ---------- Mensajes de contacto ----------
-
-function MensajesTab() {
-  const [contacts, setContacts] = useState([]);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    getContactsRequest().then(setContacts).catch((err) => setError(err.message));
-  }, []);
-
-  const toggle = async (c) => {
-    try {
-      const updated = await updateContactRequest(c._id, !c.leido);
-      setContacts(contacts.map((x) => (x._id === c._id ? updated : x)));
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  return (
-    <List>
-      {error && <Message>{error}</Message>}
-      {contacts.length === 0 && !error && <Message>No hay mensajes.</Message>}
-      {contacts.map((c) => (
-        <Panel key={c._id} style={{ opacity: c.leido ? 0.6 : 1 }}>
-          <h3 style={{ marginBottom: "0.3rem" }}>{c.nombre}</h3>
-          <Message style={{ textAlign: "left", padding: 0 }}>
-            {c.email} · {c.motivo} · {new Date(c.createdAt).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" })}
-          </Message>
-          <p style={{ margin: "1rem 0", lineHeight: 1.6 }}>{c.mensaje}</p>
-          <Button $light onClick={() => toggle(c)}>{c.leido ? "Marcar como no leído" : "Marcar como leído"}</Button>
-        </Panel>
-      ))}
-    </List>
-  );
-}
-
 // ---------- Página ----------
 
 const SECCIONES = [
   { key: "pedidos", label: "Pedidos" },
   { key: "productos", label: "Productos" },
-  { key: "mensajes", label: "Mensajes" },
 ];
 
 export function Admin() {
@@ -434,7 +394,6 @@ export function Admin() {
 
       {seccion === "pedidos" && <PedidosTab />}
       {seccion === "productos" && <ProductosTab />}
-      {seccion === "mensajes" && <MensajesTab />}
     </PageWrapper>
   );
 }

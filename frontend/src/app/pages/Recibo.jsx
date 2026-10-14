@@ -4,258 +4,306 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 const PrintStyles = createGlobalStyle`
   @media print {
-   
     header, nav, footer, .no-print, [class*="Chat"], button, aside {
       display: none !important;
     }
 
-   
-    body { 
-      background: white !important; 
-      margin: 0 !important; 
-      padding: 0 !important; 
+    body {
+      background: white !important;
+      margin: 0 !important;
+      padding: 0 !important;
       -webkit-print-color-adjust: exact;
     }
 
-   
     #print-section {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 100%;
-      margin: 0;
-      padding: 1.5cm;
       box-shadow: none !important;
-      border: none !important;
+      margin: 0 auto !important;
     }
 
     @page {
-      margin: 0;
+      margin: 1.5cm;
       size: auto;
     }
   }
 `;
 
-const PageWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: #f8f5f2; 
-  padding: 4rem 2rem;
+const PageWrapper = styled.section`
+  background: ${({ theme }) => theme.colors.background};
+  padding: 4rem 1.5rem 6rem;
+  min-height: 70vh;
 `;
 
-const ReceiptContainer = styled.div`
-  max-width: 500px;
-  width: 100%;
-  padding: 4rem 3.5rem;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.04);
-  position: relative;
-  font-family: 'Inter', sans-serif;
-  border: 1px solid rgba(0,0,0,0.05);
-
- 
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    left: 0; right: 0;
-    height: 10px;
-    background-size: 20px 10px;
-  }
-  &::before {
-    top: -10px;
-    background-image: radial-gradient(circle at 10px -5px, transparent 12px, white 13px);
-  }
-`;
-
-const LogoHeader = styled.div`
+const Intro = styled.div`
+  max-width: 560px;
+  margin: 0 auto 2.5rem;
   text-align: center;
-  margin-bottom: 3rem;
-  
-  h2 { 
-    font-family: ${({ theme }) => theme.fonts.title}; 
-    font-size: 3rem; 
+`;
+
+const Eyebrow = styled.span`
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+`;
+
+const Title = styled.h1`
+  font-family: ${({ theme }) => theme.fonts.title};
+  font-size: clamp(2.2rem, 6vw, 3rem);
+  line-height: 1.1;
+  margin: 0.5rem 0 1rem;
+`;
+
+const Text = styled.p`
+  color: ${({ theme }) => theme.colors.dark};
+  line-height: 1.7;
+`;
+
+const ReceiptCard = styled.div`
+  max-width: 560px;
+  margin: 0 auto;
+  background: white;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  box-shadow: ${({ theme }) => theme.shadow.soft};
+  padding: 2.5rem 2rem;
+
+  @media (max-width: 480px) {
+    padding: 2rem 1.25rem;
+  }
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+
+  h2 {
+    font-family: ${({ theme }) => theme.fonts.title};
+    font-size: 1.8rem;
     color: ${({ theme }) => theme.colors.text};
-    margin-bottom: 0.5rem;
   }
-  
-  .subtitle {
-    text-transform: uppercase;
-    letter-spacing: 3px;
+
+  small {
+    display: block;
+    color: ${({ theme }) => theme.colors.dark};
+    margin-top: 0.2rem;
+  }
+`;
+
+const OrderNumber = styled.div`
+  text-align: right;
+
+  @media (max-width: 480px) {
+    text-align: left;
+  }
+
+  span {
+    display: block;
     font-size: 0.75rem;
-    color: #a0a0a0;
-    font-weight: 700;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.colors.dark};
+  }
+
+  strong {
+    font-family: ${({ theme }) => theme.fonts.title};
+    font-size: 1.3rem;
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
-const InfoBar = styled.div`
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid #f0f0f0;
-  border-bottom: 1px solid #f0f0f0;
-  padding: 1.2rem 0;
-  margin-bottom: 2.5rem;
+const SectionLabel = styled.h3`
   font-size: 0.8rem;
-  color: #666;
-  font-family: monospace;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: ${({ theme }) => theme.colors.primary};
+  margin: 1.8rem 0 0.8rem;
 `;
 
-const ItemsList = styled.div`
-  margin-bottom: 3rem;
-`;
-
-const ReceiptItem = styled.div`
+const Item = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 2rem;
-  
-  .main-info {
-    strong { display: block; font-size: 1.1rem; color: #2c3e50; margin-bottom: 0.4rem; }
-    span { display: block; font-size: 0.85rem; color: #7f8c8d; line-height: 1.5; }
-  }
-  .price {
-    font-weight: 700;
-    color: #2c3e50;
-    font-size: 1rem;
-  }
-`;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px dashed ${({ theme }) => theme.colors.border};
 
-const Divider = styled.div`
-  border-top: 1px dashed #ddd;
-  margin: 1.5rem 0;
+  strong {
+    display: block;
+    color: ${({ theme }) => theme.colors.text};
+    margin-bottom: 0.2rem;
+  }
+
+  span {
+    display: block;
+    font-size: 0.85rem;
+    color: ${({ theme }) => theme.colors.dark};
+    line-height: 1.5;
+  }
+
+  .price {
+    font-weight: 600;
+    white-space: nowrap;
+    color: ${({ theme }) => theme.colors.text};
+  }
 `;
 
 const SummaryRow = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.8rem;
-  font-size: 0.95rem;
-  color: ${({ $isTotal }) => $isTotal ? '#2c3e50' : '#7f8c8d'};
-  font-weight: ${({ $isTotal }) => $isTotal ? '900' : '400'};
-  ${({ $isTotal }) => $isTotal && 'font-size: 1.5rem; margin-top: 1rem;'}
+  margin-top: 0.8rem;
+  color: ${({ theme, $isTotal }) => ($isTotal ? theme.colors.text : theme.colors.dark)};
+  font-weight: ${({ $isTotal }) => ($isTotal ? 700 : 400)};
+  ${({ $isTotal, theme }) =>
+    $isTotal &&
+    `
+    font-size: 1.4rem;
+    font-family: ${theme.fonts.title};
+    margin-top: 1.2rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid ${theme.colors.border};
+  `}
 `;
 
-const Stamp = styled.div`
-  width: 80px;
-  height: 80px;
-  border: 2px solid ${({ theme }) => theme.colors.primary};
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 3rem auto 1.5rem;
-  color: ${({ theme }) => theme.colors.primary};
-  font-weight: 900;
-  font-size: 0.7rem;
-  text-transform: uppercase;
+const DeliveryBox = styled.div`
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  padding: 1rem 1.2rem;
+  color: ${({ theme }) => theme.colors.text};
+  line-height: 1.7;
+
+  span {
+    color: ${({ theme }) => theme.colors.dark};
+  }
+`;
+
+const Thanks = styled.p`
   text-align: center;
-  transform: rotate(-15deg);
-  opacity: 0.6;
+  margin-top: 2rem;
+  color: ${({ theme }) => theme.colors.dark};
+  font-size: 0.9rem;
 `;
 
 const Actions = styled.div`
-  margin-top: 3rem;
+  max-width: 560px;
+  margin: 1.5rem auto 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 
-  @media print { display: none !important; }
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+
+  @media print {
+    display: none !important;
+  }
 `;
 
 const Button = styled.button`
-  padding: 1.2rem;
-  border: none;
-  border-radius: 100px;
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
+  width: 100%;
+  padding: 1rem;
+  border-radius: ${({ theme }) => theme.radius.md};
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 1rem;
   cursor: pointer;
-  transition: 0.3s;
-  background: ${({ $primary, theme }) => $primary ? theme.colors.primary : "#f4f1ee"};
-  color: ${({ $primary }) => $primary ? "white" : "#2c3e50"};
-  
-  &:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+  transition: 0.3s ease;
+  border: 1px solid ${({ theme, $primary }) => ($primary ? theme.colors.primary : theme.colors.border)};
+  background: ${({ theme, $primary }) => ($primary ? theme.colors.primary : "white")};
+  color: ${({ theme, $primary }) => ($primary ? "white" : theme.colors.text)};
+
+  &:hover {
+    background: ${({ theme, $primary }) => ($primary ? theme.colors.dark : theme.colors.background)};
+    border-color: ${({ theme, $primary }) => ($primary ? theme.colors.dark : theme.colors.primary)};
+  }
 `;
+
+const formatCOP = (val) =>
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(val);
 
 export function Recibo() {
   const navigate = useNavigate();
   // La orden guardada en el backend llega desde la página Domicilio
   const order = useLocation().state?.order;
 
-  const handleFinish = () => {
-    navigate("/");
-  };
-
   if (!order) return <Navigate to="/ordenar" replace />;
 
-  const fecha = new Date(order.createdAt);
+  const fecha = new Date(order.createdAt).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" });
 
   return (
     <>
       <PrintStyles />
       <PageWrapper>
-        <ReceiptContainer id="print-section">
-          <LogoHeader>
-            <h2>Velluto</h2>
-            <div className="subtitle">Gelatería Artesanal</div>
-          </LogoHeader>
+        <Intro className="no-print">
+          <Eyebrow>Pedido confirmado</Eyebrow>
+          <Title>¡Gracias por tu pedido!</Title>
+          <Text>Ya estamos preparando tus helados. Este es tu recibo.</Text>
+        </Intro>
 
-          <InfoBar>
-            <div>NEIVA, HUILA</div>
-            <div>{fecha.toLocaleDateString()} | {fecha.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-          </InfoBar>
+        <ReceiptCard id="print-section">
+          <CardHeader>
+            <div>
+              <h2>Velluto</h2>
+              <small>Gelatería Artesanal · Neiva, Huila</small>
+              <small>{fecha}</small>
+            </div>
+            <OrderNumber>
+              <span>Orden</span>
+              <strong>{order.orderNumber}</strong>
+            </OrderNumber>
+          </CardHeader>
 
-          <ItemsList>
-            {order.items.map((item, idx) => (
-              <ReceiptItem key={idx}>
-                <div className="main-info">
-                  <strong>1x Helado en {item.base}</strong>
-                  <span>{item.flavors.join(" • ")}</span>
-                  {item.toppings?.length > 0 && (
-                    <span>+ {item.toppings.map(t => t.name).join(", ")}</span>
-                  )}
-                </div>
-                <div className="price">${item.price.toLocaleString()}</div>
-              </ReceiptItem>
-            ))}
-          </ItemsList>
+          <SectionLabel>Tu pedido</SectionLabel>
+          {order.items.map((item, idx) => (
+            <Item key={idx}>
+              <div>
+                <strong>1x Helado en {item.base}</strong>
+                <span>{item.flavors.join(" • ")}</span>
+                {item.toppings?.length > 0 && <span>+ {item.toppings.map((t) => t.name).join(", ")}</span>}
+              </div>
+              <div className="price">{formatCOP(item.price)}</div>
+            </Item>
+          ))}
 
-          <Divider />
-          
           <SummaryRow>
             <span>Subtotal</span>
-            <span>${order.subtotal.toLocaleString()}</span>
+            <span>{formatCOP(order.subtotal)}</span>
           </SummaryRow>
           <SummaryRow>
-            <span>Envío Premium</span>
-            <span>${order.shippingFee.toLocaleString()}</span>
+            <span>Domicilio</span>
+            <span>{formatCOP(order.shippingFee)}</span>
           </SummaryRow>
-
           <SummaryRow $isTotal>
-            <span>TOTAL</span>
-            <span>${order.total.toLocaleString()}</span>
+            <span>Total</span>
+            <span>{formatCOP(order.total)}</span>
           </SummaryRow>
 
-          <Stamp>
-            Calidad<br/>Velluto<br/>100% Real
-          </Stamp>
+          <SectionLabel>Entrega</SectionLabel>
+          <DeliveryBox>
+            {order.delivery.direccion}
+            <br />
+            <span>Tel: {order.delivery.telefono}</span>
+            {order.delivery.notas && (
+              <>
+                <br />
+                <span>Notas: {order.delivery.notas}</span>
+              </>
+            )}
+          </DeliveryBox>
 
-          <div style={{ textAlign: 'center', color: '#a0a0a0', fontSize: '0.7rem' }}>
-            <p style={{ fontWeight: 'bold' }}>Orden #{order.orderNumber}</p>
-            <p>Entrega en: {order.delivery.direccion}</p>
-            <p>Gracias por apoyar lo artesanal.</p>
-          </div>
+          <Thanks>Gracias por apoyar lo artesanal.</Thanks>
+        </ReceiptCard>
 
-          <Actions className="no-print">
-            <Button onClick={() => window.print()}>Imprimir</Button>
-            <Button $primary onClick={handleFinish}>Nueva Orden</Button>
-          </Actions>
-        </ReceiptContainer>
+        <Actions>
+          <Button onClick={() => window.print()}>Imprimir recibo</Button>
+          <Button $primary onClick={() => navigate("/ordenar")}>Nueva orden</Button>
+        </Actions>
       </PageWrapper>
     </>
   );

@@ -49,7 +49,7 @@ backend/src/
 ├── middlewares/
 │   ├── validateToken.js  # authRequired: exige sesión
 │   └── isAdmin.js        # adminRequired: exige rol admin
-├── models/             # user, product, order, contact
+├── models/             # user, product, order
 ├── controllers/        # lógica de cada recurso
 └── routes/             # endpoints
 ```
@@ -71,12 +71,8 @@ Todas las rutas empiezan por `/api`. 🔒 = requiere sesión, 👑 = requiere ro
 | DELETE | `/productos/:id` 👑 | Eliminar producto |
 | POST | `/ordenes` 🔒 | Crear pedido. El backend calcula los precios |
 | GET | `/ordenes/mias` 🔒 | Pedidos del usuario |
-| GET | `/ordenes/seguimiento/:numero` | Estado de un pedido (público) |
 | GET | `/ordenes` 👑 | Todos los pedidos |
 | PUT | `/ordenes/:id/estado` 👑 | Cambiar estado (`pendiente`, `preparando`, `en camino`, `entregado`, `cancelado`) |
-| POST | `/contacto` | Enviar mensaje del formulario de contacto |
-| GET | `/contacto` 👑 | Ver mensajes |
-| PUT | `/contacto/:id` 👑 | Marcar mensaje como leído (`leido`) |
 
 Ejemplo de `POST /api/ordenes`:
 
@@ -91,4 +87,4 @@ Ejemplo de `POST /api/ordenes`:
 
 ## Flujo del pedido en el frontend
 
-Ordenar → Pagar → Domicilio (si no hay sesión pide ingresar) → Pedir ahora → Recibo con número real → seguimiento en Domicilio o en "Mis pedidos".
+Ordenar → Pagar → Domicilio (si no hay sesión pide ingresar) → Pedir ahora → Recibo con número real. Los pedidos anteriores se ven en "Mis pedidos".

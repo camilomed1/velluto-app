@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import { DeliverySection } from "../components/DeliverySection";
-import { TrackOrder } from "../components/TrackOrder";
 
 
 const PageWrapper = styled.div`
@@ -65,10 +64,6 @@ export function Domicilio({ cart, setCart }) {
       <NoticeBanner>
         ⚠️ El domicilio cuesta $5.000 dentro de Neiva. Los pedidos fuera de la zona urbana pueden tener un recargo adicional.
       </NoticeBanner>
-
-      <div style={{ width: "100%", marginTop: "3rem" }}>
-        <TrackOrder />
-      </div>
     </PageWrapper>
   );
 }

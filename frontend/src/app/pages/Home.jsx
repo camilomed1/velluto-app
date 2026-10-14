@@ -259,9 +259,9 @@ export function Home() {
 
         <ContactCTA className="contact-anim">
           <h2>¿Antojo de algo especial?</h2>
-          <p>Estamos listos para llevar la experiencia Velluto a tu puerta o resolver cualquier duda.</p>
-          <button onClick={() => navigate("/contacto")}>
-            Escríbenos
+          <p>Estamos listos para llevar la experiencia Velluto a tu puerta.</p>
+          <button onClick={() => navigate("/ordenar")}>
+            Arma tu helado
           </button>
         </ContactCTA>
         

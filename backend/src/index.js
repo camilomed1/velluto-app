@@ -8,7 +8,6 @@ import { PORT, FRONTEND_URL } from './config.js'
 import authRoutes from './routes/auth.routes.js'
 import productsRoutes from './routes/products.routes.js'
 import ordersRoutes from './routes/orders.routes.js'
-import contactRoutes from './routes/contact.routes.js'
 
 const app = express()
 
@@ -26,7 +25,6 @@ connectDB()
 app.use("/api", authRoutes)
 app.use("/api", productsRoutes)
 app.use("/api", ordersRoutes)
-app.use("/api", contactRoutes)
 
 app.listen(PORT, () => {
   console.log(`SERVER IS RUNNING ON PORT ${PORT}`)

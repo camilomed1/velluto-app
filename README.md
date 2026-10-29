@@ -48,7 +48,8 @@ backend/src/
 ├── libs/jwt.js         # crear token
 ├── middlewares/
 │   ├── validateToken.js  # authRequired: exige sesión
-│   └── isAdmin.js        # adminRequired: exige rol admin
+│   ├── isAdmin.js        # adminRequired: exige rol admin
+│   └── isDomiciliario.js # domiciliarioRequired: exige rol domiciliario
 ├── models/             # user, product, order
 ├── controllers/        # lógica de cada recurso
 └── routes/             # endpoints
@@ -56,7 +57,9 @@ backend/src/
 
 ## API
 
-Todas las rutas empiezan por `/api`. 🔒 = requiere sesión, 👑 = requiere rol admin.
+Todas las rutas empiezan por `/api`. 🔒 = requiere sesión, 👑 = requiere rol admin, 🛵 = requiere rol domiciliario.
+
+Roles: `cliente` (se registra solo), `admin` (lo crea el seed) y `domiciliario` (lo crea el admin).
 
 | Método | Ruta | Descripción |
 |---|---|---|
@@ -72,14 +75,21 @@ Todas las rutas empiezan por `/api`. 🔒 = requiere sesión, 👑 = requiere ro
 | GET | `/productos` | Menú disponible. Filtros: `?tipo=sabor\|base\|topping`, `?todos=true` |
 | GET | `/productos/:id` | Un producto |
 | POST | `/productos` 👑 | Crear producto |
-| PUT | `/productos/:id` 👑 | Editar producto (precio, disponible, etc.) |
+| PUT | `/productos/:id` 👑 | Editar producto (precio, disponible, destacado, etc.) |
 | DELETE | `/productos/:id` 👑 | Eliminar producto |
 | POST | `/ordenes` | Crear pedido, con o sin cuenta. El backend calcula los precios |
 | GET | `/ordenes/mias` 🔒 | Pedidos del usuario |
 | GET | `/ordenes` 👑 | Todos los pedidos |
 | PUT | `/ordenes/:id/estado` 👑 | Cambiar estado (`pendiente`, `preparando`, `en camino`, `entregado`, `cancelado`) |
+| GET | `/entregas/disponibles` 🛵 | Pedidos en `preparando` que nadie ha tomado |
+| GET | `/entregas/mias` 🛵 | Pedidos del domiciliario (en camino y entregados) |
+| PUT | `/entregas/:id/tomar` 🛵 | Tomar un pedido (pasa a `en camino`) |
+| PUT | `/entregas/:id/entregar` 🛵 | Marcar como `entregado` |
+| GET | `/usuarios/domiciliarios` 👑 | Lista de domiciliarios |
+| POST | `/usuarios/domiciliarios` 👑 | Crear domiciliario (`username`, `email`, `telefono`, `password`) |
+| DELETE | `/usuarios/domiciliarios/:id` 👑 | Eliminar domiciliario |
 
-Ejemplo de `POST /api/ordenes`:
+Ejemplo de `POST /api/ordenes` (máximo 3 sabores y 3 toppings por helado):
 
 ```json
 {
@@ -95,3 +105,13 @@ Ejemplo de `POST /api/ordenes`:
 Ordenar → Pagar → Domicilio (nombre, teléfono, dirección y comentario) → Pedir ahora → Recibo con número real.
 
 No hace falta cuenta para pedir. Con cuenta, el formulario se llena solo y se puede elegir una dirección guardada. En "Mi cuenta" el usuario edita sus datos, sus direcciones y ve sus pedidos.
+
+## Domicilios
+
+1. El admin crea las cuentas de domiciliarios en Admin → Domiciliarios.
+2. Cuando un pedido está listo, el admin lo pasa a "preparando".
+3. El domiciliario lo ve en Entregas → Disponibles, lo toma (queda "en camino") y al llegar lo marca como entregado.
+
+## Sabores destacados
+
+En Admin → Productos → Sabores, el botón "Destacar" elige qué sabores salen en el carrusel de inicio. Si se actualiza desde una versión anterior, correr `npm run seed` para marcar los primeros 6.

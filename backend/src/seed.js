@@ -12,7 +12,9 @@ const seed = async () => {
 
     await Product.deleteMany({})
 
-    const sabores = SABORES.map(s => ({
+    // Los primeros 6 sabores empiezan como destacados (se cambian desde el admin)
+    const sabores = SABORES.map((s, i) => ({
+        destacado: i < 6,
         tipo: 'sabor',
         name: s.name,
         description: s.description,

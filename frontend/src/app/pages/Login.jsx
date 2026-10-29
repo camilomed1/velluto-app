@@ -19,7 +19,8 @@ export function Login() {
     setError("");
     try {
       const user = await signin(form);
-      navigate(from || (user.rol === "admin" ? "/admin" : "/mi-cuenta"), { replace: true });
+      const inicio = { admin: "/admin", domiciliario: "/entregas" }[user.rol] || "/mi-cuenta";
+      navigate(from || inicio, { replace: true });
     } catch (err) {
       setError(err.message);
       setSending(false);

@@ -119,7 +119,7 @@ const ScoopVisual = styled.div`
 const BaseVisual = styled.div`
   z-index: 1;
   ${({ $type }) => $type === "Cono" && `width: 90px; height: 130px; background: #e3a661; clip-path: polygon(0 0, 100% 0, 50% 100%); background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px);`}
-  ${({ $type }) => $type === "Vaso" && `width: 120px; height: 80px; background: #fff; border: 4px solid #f1f2f6; border-radius: 5px 5px 40px 40px;`}
+  ${({ $type }) => $type === "Vaso" && `width: 120px; height: 95px; background: repeating-linear-gradient(90deg, #E8D3B5 0 12px, #D9C2A3 12px 24px); clip-path: polygon(0 0, 100% 0, 84% 100%, 16% 100%); border-top: 8px solid #C97E5A;`}
   ${({ $type }) => ($type === "Brownie" || $type === "Waffle Bowl") && `width: 140px; height: 50px; background: #3d2b1f; border-radius: 12px;`}
 `;
 
@@ -192,6 +192,8 @@ const ToastContainer = styled.div` position: fixed; top: 10%; left: 50%; transfo
 const ToastBody = styled.div` background: ${({ $type }) => ($type === "error" ? "#e74c3c" : "#2ecc71")}; color: white; padding: 1rem 2rem; border-radius: 15px; opacity: 0; font-weight: bold; `;
 
 
+
+const MAX_TOPPINGS = 3;
 
 const formatCOP = (val) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(val);
 
@@ -294,11 +296,12 @@ export function Ordenar({ cart, setCart }) {
           </Section>
 
           <Section className="reveal-section">
-            <SectionTitle>03. Toppings</SectionTitle>
+            <SectionTitle>03. Toppings ({order.toppings.length}/{MAX_TOPPINGS})</SectionTitle>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
               {toppings.map(t => (
                 <button key={t._id} onClick={() => {
                   const exists = order.toppings.find(item => item._id === t._id);
+                  if (!exists && order.toppings.length >= MAX_TOPPINGS) return showToast(`Máximo ${MAX_TOPPINGS} toppings por helado`, "error");
                   setOrder({...order, toppings: exists ? order.toppings.filter(it => it._id !== t._id) : [...order.toppings, t]});
                 }} style={{ padding: '10px 20px', borderRadius: '30px', border: '1px solid #eee', cursor: 'pointer',
                 background: order.toppings.some(item => item._id === t._id) ? '#e67e22' : 'white', 

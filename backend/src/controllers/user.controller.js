@@ -123,3 +123,55 @@ export const deleteAddress = async (req, res) => {
         return res.status(500).json({ message: error.message })
     }
 }
+
+// ---------- Admin: domiciliarios ----------
+
+const domiciliarioResponse = (user) => ({
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    telefono: user.telefono,
+    createdAt: user.createdAt,
+})
+
+export const getDomiciliarios = async (req, res) => {
+    try {
+        const users = await User.find({ rol: 'domiciliario' }).sort({ createdAt: -1 })
+        return res.json(users.map(domiciliarioResponse))
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+export const createDomiciliario = async (req, res) => {
+    const { username, email, telefono, password } = req.body
+
+    try {
+        if (!username?.trim() || !email?.trim() || !password) return res.status(400).json({ message: "Nombre, email y contraseña son obligatorios" })
+        if (password.length < 6) return res.status(400).json({ message: "La contraseña debe tener al menos 6 caracteres" })
+
+        const userFound = await User.findOne({ email: email.toLowerCase() })
+        if (userFound) return res.status(400).json({ message: "El email ya está en uso" })
+
+        const newUser = await User.create({
+            username: username.trim(),
+            email,
+            telefono: telefono?.trim() || '',
+            password: await bcrypt.hash(password, 10),
+            rol: 'domiciliario'
+        })
+        return res.status(201).json(domiciliarioResponse(newUser))
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+export const deleteDomiciliario = async (req, res) => {
+    try {
+        const user = await User.findOneAndDelete({ _id: req.params.id, rol: 'domiciliario' })
+        if (!user) return res.status(404).json({ message: "Domiciliario no encontrado" })
+        return res.sendStatus(204)
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}

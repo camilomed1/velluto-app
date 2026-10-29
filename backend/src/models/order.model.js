@@ -49,6 +49,12 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ['pendiente', 'preparando', 'en camino', 'entregado', 'cancelado'],
     default: 'pendiente'
+  },
+  // Domiciliario que lleva el pedido (null mientras nadie lo tome)
+  domiciliario: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, {
   timestamps: true

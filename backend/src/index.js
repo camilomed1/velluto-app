@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes.js'
 import userRoutes from './routes/user.routes.js'
 import productsRoutes from './routes/products.routes.js'
 import ordersRoutes from './routes/orders.routes.js'
+import deliveryRoutes from './routes/delivery.routes.js'
 
 const app = express()
 
@@ -27,6 +28,7 @@ app.use("/api", authRoutes)
 app.use("/api", userRoutes)
 app.use("/api", productsRoutes)
 app.use("/api", ordersRoutes)
+app.use("/api", deliveryRoutes)
 
 app.listen(PORT, () => {
   console.log(`SERVER IS RUNNING ON PORT ${PORT}`)

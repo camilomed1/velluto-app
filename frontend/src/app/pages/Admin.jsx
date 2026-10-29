@@ -7,6 +7,9 @@ import {
   createProductRequest,
   updateProductRequest,
   deleteProductRequest,
+  getDomiciliariosRequest,
+  createDomiciliarioRequest,
+  deleteDomiciliarioRequest,
 } from "../../api/api";
 import { useProducts } from "../context/ProductsContext";
 import { OrderCard, formatCOP } from "../components/OrderCard";
@@ -158,7 +161,7 @@ const Button = styled.button`
 
 const ProductRow = styled.div`
   display: grid;
-  grid-template-columns: 1fr 140px auto auto;
+  grid-template-columns: 1fr 140px 340px;
   gap: 1rem;
   align-items: center;
   padding: 0.8rem 0;
@@ -167,8 +170,20 @@ const ProductRow = styled.div`
 
   small { display: block; color: ${({ theme }) => theme.colors.dark}; }
 
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr 1fr;
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr 120px;
+  }
+`;
+
+const RowActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+
+  @media (max-width: 700px) {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 `;
 
@@ -222,6 +237,9 @@ function PedidosTab() {
               <Extra>
                 <div>
                   Cliente: <strong>{order.delivery.nombre || order.user?.username}</strong> · Tel: {order.delivery.telefono} · {order.user ? `Cuenta: ${order.user.email}` : "Sin cuenta"}
+                  {order.domiciliario && (
+                    <div>Domiciliario: <strong>{order.domiciliario.username}</strong>{order.domiciliario.telefono && ` · Tel: ${order.domiciliario.telefono}`}</div>
+                  )}
                 </div>
                 <Select value={order.status} onChange={(e) => changeStatus(order._id, e.target.value)}>
                   {ESTADOS.map((s) => (
@@ -341,6 +359,11 @@ function ProductosTab() {
 
         <Panel>
           <h3>{TIPOS.find((t) => t.value === tipo).label}</h3>
+          {tipo === "sabor" && (
+            <Message style={{ textAlign: "left", padding: "0 0 0.5rem" }}>
+              Los sabores marcados con ★ aparecen en el carrusel de la página de inicio.
+            </Message>
+          )}
           {products
             .filter((p) => p.tipo === tipo)
             .map((p) => (
@@ -357,10 +380,21 @@ function ProductosTab() {
                   onBlur={(e) => handlePrice(p, e.target.value)}
                   title="Cambia el precio y haz clic afuera para guardar"
                 />
-                <Button $light onClick={() => run(() => updateProductRequest(p._id, { disponible: !p.disponible }))}>
-                  {p.disponible ? "Ocultar" : "Mostrar"}
-                </Button>
-                <Button $light onClick={() => handleDelete(p)}>Eliminar</Button>
+                <RowActions>
+                  {p.tipo === "sabor" && (
+                    <Button
+                      $light={!p.destacado}
+                      onClick={() => run(() => updateProductRequest(p._id, { destacado: !p.destacado }))}
+                      title="Los sabores destacados aparecen en el carrusel de inicio"
+                    >
+                      {p.destacado ? "★ Destacado" : "Destacar"}
+                    </Button>
+                  )}
+                  <Button $light onClick={() => run(() => updateProductRequest(p._id, { disponible: !p.disponible }))}>
+                    {p.disponible ? "Ocultar" : "Mostrar"}
+                  </Button>
+                  <Button $light onClick={() => handleDelete(p)}>Eliminar</Button>
+                </RowActions>
               </ProductRow>
             ))}
         </Panel>
@@ -369,11 +403,99 @@ function ProductosTab() {
   );
 }
 
+// ---------- Domiciliarios ----------
+
+const EMPTY_DOMI = { username: "", email: "", telefono: "", password: "" };
+
+function DomiciliariosTab() {
+  const [domis, setDomis] = useState([]);
+  const [nuevo, setNuevo] = useState(EMPTY_DOMI);
+  const [error, setError] = useState("");
+
+  const load = () => getDomiciliariosRequest().then(setDomis).catch((err) => setError(err.message));
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      await createDomiciliarioRequest(nuevo);
+      setNuevo(EMPTY_DOMI);
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDelete = async (d) => {
+    if (!window.confirm(`¿Eliminar la cuenta de "${d.username}"?`)) return;
+    setError("");
+    try {
+      await deleteDomiciliarioRequest(d.id);
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const change = (e) => setNuevo({ ...nuevo, [e.target.name]: e.target.value });
+
+  return (
+    <List>
+      {error && <Message>{error}</Message>}
+
+      <Panel>
+        <h3>Agregar domiciliario</h3>
+        <FormGrid onSubmit={handleCreate}>
+          <div>
+            <label>Nombre</label>
+            <Input name="username" value={nuevo.username} onChange={change} required />
+          </div>
+          <div>
+            <label>Correo Electrónico</label>
+            <Input name="email" type="email" value={nuevo.email} onChange={change} required />
+          </div>
+          <div>
+            <label>Teléfono</label>
+            <Input name="telefono" type="tel" value={nuevo.telefono} onChange={change} />
+          </div>
+          <div>
+            <label>Contraseña</label>
+            <Input name="password" type="password" minLength={6} placeholder="Mínimo 6 caracteres" value={nuevo.password} onChange={change} required />
+          </div>
+          <Button type="submit">Crear cuenta</Button>
+        </FormGrid>
+      </Panel>
+
+      <Panel>
+        <h3>Domiciliarios</h3>
+        <Message style={{ textAlign: "left", padding: "0 0 0.5rem" }}>
+          Los domiciliarios ingresan con su correo y ven los pedidos en estado "preparando" para tomarlos.
+        </Message>
+        {domis.length === 0 && <Message>No hay domiciliarios todavía.</Message>}
+        {domis.map((d) => (
+          <ProductRow key={d.id} style={{ gridTemplateColumns: "1fr auto" }}>
+            <div>
+              <strong>{d.username}</strong>
+              <small>{d.email}{d.telefono && ` · Tel: ${d.telefono}`}</small>
+            </div>
+            <Button $light onClick={() => handleDelete(d)}>Eliminar</Button>
+          </ProductRow>
+        ))}
+      </Panel>
+    </List>
+  );
+}
+
 // ---------- Página ----------
 
 const SECCIONES = [
   { key: "pedidos", label: "Pedidos" },
   { key: "productos", label: "Productos" },
+  { key: "domiciliarios", label: "Domiciliarios" },
 ];
 
 export function Admin() {
@@ -394,6 +516,7 @@ export function Admin() {
 
       {seccion === "pedidos" && <PedidosTab />}
       {seccion === "productos" && <ProductosTab />}
+      {seccion === "domiciliarios" && <DomiciliariosTab />}
     </PageWrapper>
   );
 }

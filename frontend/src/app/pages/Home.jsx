@@ -195,7 +195,9 @@ const InfoCard = styled.div`
 
 export function Home() {
   const { sabores } = useProducts();
-  const destacados = sabores.slice(0, 6);
+  // Los destacados se eligen desde el panel de admin (si no hay ninguno, mostramos los primeros 6)
+  const marcados = sabores.filter((s) => s.destacado);
+  const destacados = marcados.length > 0 ? marcados : sabores.slice(0, 6);
   const navigate = useNavigate();
 
   useGSAP(() => {

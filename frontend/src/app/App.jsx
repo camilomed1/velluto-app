@@ -17,6 +17,7 @@ import { Recibo } from "./pages/Recibo";
 import { Login } from "./pages/Login";
 import { Registro } from "./pages/Registro";
 import { MiCuenta } from "./pages/MiCuenta";
+import { Entregas } from "./pages/Entregas";
 import { Admin } from "./pages/Admin";
 import { Chatbot } from "./components/Chatbot";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -86,6 +87,7 @@ export default function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/registro" element={<Registro />} />
                 <Route path="/mi-cuenta" element={<ProtectedRoute><MiCuenta /></ProtectedRoute>} />
+                <Route path="/entregas" element={<ProtectedRoute rol="domiciliario"><Entregas /></ProtectedRoute>} />
                 <Route path="/mis-pedidos" element={<Navigate to="/mi-cuenta?tab=pedidos" replace />} />
                 <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
                 

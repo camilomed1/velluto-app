@@ -179,9 +179,9 @@ export function Header() {
 
           {user ? (
             <>
-              {isAdmin
-                ? <NavLink to="/admin" $active={isActive('/admin')}>Admin</NavLink>
-                : <NavLink to="/mi-cuenta" $active={isActive('/mi-cuenta')}>Mi cuenta</NavLink>}
+              {isAdmin && <NavLink to="/admin" $active={isActive('/admin')}>Admin</NavLink>}
+              {user.rol === 'domiciliario' && <NavLink to="/entregas" $active={isActive('/entregas')}>Entregas</NavLink>}
+              {user.rol === 'cliente' && <NavLink to="/mi-cuenta" $active={isActive('/mi-cuenta')}>Mi cuenta</NavLink>}
               <NavButton onClick={handleLogout}>Salir</NavButton>
             </>
           ) : (

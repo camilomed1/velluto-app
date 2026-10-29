@@ -43,3 +43,14 @@ export const createOrderRequest = (order) => request("/ordenes", { method: "POST
 export const getMyOrdersRequest = () => request("/ordenes/mias");
 export const getOrdersRequest = () => request("/ordenes");
 export const updateOrderStatusRequest = (id, status) => request(`/ordenes/${id}/estado`, { method: "PUT", body: { status } });
+
+// Domiciliario
+export const getAvailableDeliveriesRequest = () => request("/entregas/disponibles");
+export const getMyDeliveriesRequest = () => request("/entregas/mias");
+export const takeDeliveryRequest = (id) => request(`/entregas/${id}/tomar`, { method: "PUT" });
+export const completeDeliveryRequest = (id) => request(`/entregas/${id}/entregar`, { method: "PUT" });
+
+// Admin: domiciliarios
+export const getDomiciliariosRequest = () => request("/usuarios/domiciliarios");
+export const createDomiciliarioRequest = (data) => request("/usuarios/domiciliarios", { method: "POST", body: data });
+export const deleteDomiciliarioRequest = (id) => request(`/usuarios/domiciliarios/${id}`, { method: "DELETE" });

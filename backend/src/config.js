@@ -7,3 +7,6 @@ export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173"
 
 // Costo fijo del domicilio (COP)
 export const COSTO_ENVIO = 5000
+
+// Máximo de toppings por helado
+export const MAX_TOPPINGS = 3

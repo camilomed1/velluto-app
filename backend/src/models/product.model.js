@@ -37,6 +37,11 @@ const productSchema = new mongoose.Schema({
   disponible: {
     type: Boolean,
     default: true
+  },
+  // Solo para sabores: aparece en el carrusel de la página de inicio
+  destacado: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

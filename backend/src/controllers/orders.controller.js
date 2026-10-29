@@ -1,6 +1,6 @@
 import Order from '../models/order.model.js'
 import Product from '../models/product.model.js'
-import { COSTO_ENVIO } from '../config.js'
+import { COSTO_ENVIO, MAX_TOPPINGS } from '../config.js'
 
 const ESTADOS = ['pendiente', 'preparando', 'en camino', 'entregado', 'cancelado']
 
@@ -38,6 +38,7 @@ export const createOrder = async (req, res) => {
             if (sabores.includes(undefined)) return res.status(400).json({ message: "Sabor no válido o no disponible" })
 
             const toppingIds = [...new Set(item.toppings || [])]
+            if (toppingIds.length > MAX_TOPPINGS) return res.status(400).json({ message: `Máximo ${MAX_TOPPINGS} toppings por helado` })
             const toppings = toppingIds.map(id => buscar(id, 'topping'))
             if (toppings.includes(undefined)) return res.status(400).json({ message: "Topping no válido o no disponible" })
 
@@ -91,7 +92,10 @@ export const getMyOrders = async (req, res) => {
 // Admin: todos los pedidos
 export const getOrders = async (req, res) => {
     try {
-        const orders = await Order.find().populate('user', 'username email').sort({ createdAt: -1 })
+        const orders = await Order.find()
+            .populate('user', 'username email')
+            .populate('domiciliario', 'username telefono')
+            .sort({ createdAt: -1 })
         return res.json(orders)
     } catch (error) {
         return res.status(500).json({ message: error.message })
@@ -105,7 +109,12 @@ export const updateOrderStatus = async (req, res) => {
     try {
         if (!ESTADOS.includes(status)) return res.status(400).json({ message: "Estado no válido" })
 
-        const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true }).populate('user', 'username email')
+        // Si el pedido vuelve a pendiente o preparando, queda libre para que otro domiciliario lo tome
+        const cambios = ['pendiente', 'preparando'].includes(status) ? { status, domiciliario: null } : { status }
+
+        const order = await Order.findByIdAndUpdate(req.params.id, cambios, { new: true })
+            .populate('user', 'username email')
+            .populate('domiciliario', 'username telefono')
         if (!order) return res.status(404).json({ message: "Pedido no encontrado" })
         return res.json(order)
     } catch (error) {

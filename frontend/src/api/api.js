@@ -38,6 +38,20 @@ export const createProductRequest = (product) => request("/productos", { method:
 export const updateProductRequest = (id, product) => request(`/productos/${id}`, { method: "PUT", body: product });
 export const deleteProductRequest = (id) => request(`/productos/${id}`, { method: "DELETE" });
 
+// Sube una foto (FormData, no JSON) y devuelve { image: "/uploads/..." }
+export const uploadImageRequest = async (file) => {
+  const formData = new FormData();
+  formData.append("imagen", file);
+  const res = await fetch(`${API_URL}/productos/imagen`, { method: "POST", credentials: "include", body: formData });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || "No pudimos subir la imagen");
+  return data;
+};
+
+// Las fotos subidas por el admin están en el backend; las originales en /public del frontend
+const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
+export const imageUrl = (path) => (path?.startsWith("/uploads/") ? `${API_ORIGIN}${path}` : path);
+
 // Órdenes
 export const createOrderRequest = (order) => request("/ordenes", { method: "POST", body: order });
 export const getMyOrdersRequest = () => request("/ordenes/mias");

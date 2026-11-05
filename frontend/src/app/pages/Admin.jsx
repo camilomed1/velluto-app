@@ -7,6 +7,8 @@ import {
   createProductRequest,
   updateProductRequest,
   deleteProductRequest,
+  uploadImageRequest,
+  imageUrl,
   getDomiciliariosRequest,
   createDomiciliarioRequest,
   deleteDomiciliarioRequest,
@@ -161,7 +163,7 @@ const Button = styled.button`
 
 const ProductRow = styled.div`
   display: grid;
-  grid-template-columns: 1fr 140px 340px;
+  grid-template-columns: 1fr 120px 470px;
   gap: 1rem;
   align-items: center;
   padding: 0.8rem 0;
@@ -175,11 +177,62 @@ const ProductRow = styled.div`
   }
 `;
 
+const NameCell = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+`;
+
+const ImagePicker = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+
+  small {
+    color: ${({ theme }) => theme.colors.dark};
+    font-size: 0.8rem;
+  }
+`;
+
+// Miniatura de la foto; al tocarla se abre el selector de archivos
+const Thumb = styled.div`
+  flex-shrink: 0;
+  width: ${({ $small }) => ($small ? "48px" : "64px")};
+  height: ${({ $small }) => ($small ? "48px" : "64px")};
+  border-radius: ${({ theme }) => theme.radius.md};
+  border: 1px dashed ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.background};
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 1.5rem;
+  transition: 0.2s ease;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    opacity: 0.85;
+  }
+`;
+
 const RowActions = styled.div`
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
   justify-content: flex-end;
+
+  button {
+    padding: 0.55rem 0.9rem;
+    font-size: 0.85rem;
+  }
 
   @media (max-width: 700px) {
     grid-column: 1 / -1;
@@ -265,6 +318,7 @@ function ProductosTab() {
   const [tipo, setTipo] = useState("sabor");
   const [nuevo, setNuevo] = useState(EMPTY_PRODUCT);
   const [error, setError] = useState("");
+  const [subiendo, setSubiendo] = useState(false);
 
   const load = () => getProductsRequest(true).then(setProducts).catch((err) => setError(err.message));
 
@@ -305,6 +359,30 @@ function ProductosTab() {
 
   const change = (e) => setNuevo({ ...nuevo, [e.target.name]: e.target.value });
 
+  // Foto del sabor nuevo: se sube apenas la eligen para mostrar la vista previa
+  const handleNewImage = async (file) => {
+    if (!file) return;
+    setSubiendo(true);
+    setError("");
+    try {
+      const { image } = await uploadImageRequest(file);
+      setNuevo((n) => ({ ...n, image }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubiendo(false);
+    }
+  };
+
+  // Cambiar la foto de un sabor que ya existe
+  const handleChangeImage = (product, file) => {
+    if (!file) return;
+    run(async () => {
+      const { image } = await uploadImageRequest(file);
+      await updateProductRequest(product._id, { image });
+    });
+  };
+
   return (
     <>
       <Tabs>
@@ -337,9 +415,15 @@ function ProductosTab() {
                     {CATEGORIAS.map((c) => <option key={c}>{c}</option>)}
                   </Select>
                 </div>
-                <div>
-                  <label>Imagen (ruta)</label>
-                  <Input name="image" value={nuevo.image} onChange={change} placeholder="/sabores/fresa.png" />
+                <div style={{ gridColumn: "span 2" }}>
+                  <label>Foto</label>
+                  <ImagePicker>
+                    <Thumb as="label" title="Elegir foto">
+                      {nuevo.image ? <img src={imageUrl(nuevo.image)} alt="Vista previa" /> : <span>+</span>}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => handleNewImage(e.target.files[0])} hidden />
+                    </Thumb>
+                    <small>{subiendo ? "Subiendo..." : nuevo.image ? "Toca la foto para cambiarla" : "PNG, JPG o WEBP (máx. 5 MB)"}</small>
+                  </ImagePicker>
                 </div>
                 <div>
                   <label>Color</label>
@@ -353,7 +437,7 @@ function ProductosTab() {
                 <Input name="description" value={nuevo.description} onChange={change} />
               </div>
             )}
-            <Button type="submit">Agregar</Button>
+            <Button type="submit" disabled={subiendo}>Agregar</Button>
           </FormGrid>
         </Panel>
 
@@ -368,10 +452,22 @@ function ProductosTab() {
             .filter((p) => p.tipo === tipo)
             .map((p) => (
               <ProductRow key={p._id} $off={!p.disponible}>
-                <div>
-                  <strong>{p.name}</strong>
-                  <small>{p.category || formatCOP(p.price)}</small>
-                </div>
+                <NameCell>
+                  {p.tipo === "sabor" && (
+                    <Thumb as="label" title="Cambiar foto" $small>
+                      {p.image ? <img src={imageUrl(p.image)} alt={p.name} /> : <span>+</span>}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => handleChangeImage(p, e.target.files[0])} hidden />
+                    </Thumb>
+                  )}
+                  <div>
+                    <strong>{p.name}</strong>
+                    <small>
+                      {p.category || formatCOP(p.price)}
+                      {p.agotado && " · Agotado"}
+                      {!p.disponible && " · Oculto"}
+                    </small>
+                  </div>
+                </NameCell>
                 <Input
                   type="number"
                   min="0"
@@ -390,6 +486,13 @@ function ProductosTab() {
                       {p.destacado ? "★ Destacado" : "Destacar"}
                     </Button>
                   )}
+                  <Button
+                    $light={!p.agotado}
+                    onClick={() => run(() => updateProductRequest(p._id, { agotado: !p.agotado }))}
+                    title={p.agotado ? "Marcar que hay stock" : "Se sigue viendo en el menú pero no se puede pedir"}
+                  >
+                    {p.agotado ? "Agotado" : "Marcar agotado"}
+                  </Button>
                   <Button $light onClick={() => run(() => updateProductRequest(p._id, { disponible: !p.disponible }))}>
                     {p.disponible ? "Ocultar" : "Mostrar"}
                   </Button>

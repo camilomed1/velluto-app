@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { useProducts } from "../context/ProductsContext";
+import { imageUrl } from "../../api/api";
 
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -143,6 +144,22 @@ const FlavorItemCard = styled.div`
   }
 `;
 
+// Etiqueta "Agotado" sobre la foto
+const SoldOutBadge = styled.span`
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 2;
+  padding: 0.4rem 1rem;
+  border-radius: 25px;
+  background: ${({ theme }) => theme.colors.dark};
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
 const OrderCTA = styled.div`
   margin-top: 5rem;
   text-align: center;
@@ -204,8 +221,9 @@ export function Sabores() {
         {filteredFlavors.map((flavor) => (
           <div key={flavor._id} className="flavor-item-anim">
             <FlavorItemCard>
-              <div className="image-container">
-                <img src={flavor.image} alt={flavor.name} />
+              {flavor.agotado && <SoldOutBadge>Agotado</SoldOutBadge>}
+              <div className="image-container" style={flavor.agotado ? { filter: "grayscale(0.7)" } : undefined}>
+                <img src={imageUrl(flavor.image)} alt={flavor.name} />
               </div>
               <div className="info-overlay">
                 <h3>{flavor.name}</h3>

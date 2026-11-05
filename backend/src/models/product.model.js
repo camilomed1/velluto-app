@@ -38,6 +38,11 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // Agotado: se sigue viendo en el menú pero no se puede pedir
+  agotado: {
+    type: Boolean,
+    default: false
+  },
   // Solo para sabores: aparece en el carrusel de la página de inicio
   destacado: {
     type: Boolean,

@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import { connectDB } from './db.js'
 import { PORT, FRONTEND_URL } from './config.js'
+import { UPLOADS_DIR } from './middlewares/upload.js'
 
 import authRoutes from './routes/auth.routes.js'
 import userRoutes from './routes/user.routes.js'
@@ -21,6 +22,9 @@ app.use(cors({
 app.use(morgan('dev'))
 app.use(express.json())
 app.use(cookieParser())
+
+// Fotos de productos subidas desde el panel de admin
+app.use('/uploads', express.static(UPLOADS_DIR))
 
 connectDB()
 

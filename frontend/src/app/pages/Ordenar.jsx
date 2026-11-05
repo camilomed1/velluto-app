@@ -261,9 +261,14 @@ export function Ordenar({ cart, setCart }) {
             <SectionTitle>01. Base</SectionTitle>
             <OptionsGrid>
               {bases.map(b => (
-                <OptionCard key={b._id} $active={order.base === b.name} onClick={() => setOrder({ ...order, base: b.name })}>
+                <OptionCard
+                  key={b._id}
+                  $active={order.base === b.name}
+                  style={b.agotado ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
+                  onClick={() => (b.agotado ? showToast(`${b.name} está agotado`, "error") : setOrder({ ...order, base: b.name }))}
+                >
                   <h3>{b.name}</h3>
-                  <span className="extra">+{formatCOP(b.price)}</span>
+                  <span className="extra">{b.agotado ? "Agotado" : `+${formatCOP(b.price)}`}</span>
                 </OptionCard>
               ))}
             </OptionsGrid>
@@ -290,7 +295,11 @@ export function Ordenar({ cart, setCart }) {
                 setOrder({...order, flavors: upd});
               }} style={{ width: '100%', padding: '1.2rem', borderRadius: '18px', marginBottom: '1rem', border: '2px solid #f1f2f6', outline: 'none' }}>
                 <option value="">Selecciona sabor #{i + 1}...</option>
-                {sabores.map(s => <option key={s._id} value={s._id}>{s.name} (+{formatCOP(s.price)})</option>)}
+                {sabores.map(s => (
+                  <option key={s._id} value={s._id} disabled={s.agotado}>
+                    {s.name} {s.agotado ? "(Agotado)" : `(+${formatCOP(s.price)})`}
+                  </option>
+                ))}
               </select>
             ))}
           </Section>
@@ -299,14 +308,15 @@ export function Ordenar({ cart, setCart }) {
             <SectionTitle>03. Toppings ({order.toppings.length}/{MAX_TOPPINGS})</SectionTitle>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
               {toppings.map(t => (
-                <button key={t._id} onClick={() => {
+                <button key={t._id} disabled={t.agotado} title={t.agotado ? "Agotado" : undefined} onClick={() => {
                   const exists = order.toppings.find(item => item._id === t._id);
                   if (!exists && order.toppings.length >= MAX_TOPPINGS) return showToast(`Máximo ${MAX_TOPPINGS} toppings por helado`, "error");
                   setOrder({...order, toppings: exists ? order.toppings.filter(it => it._id !== t._id) : [...order.toppings, t]});
-                }} style={{ padding: '10px 20px', borderRadius: '30px', border: '1px solid #eee', cursor: 'pointer',
-                background: order.toppings.some(item => item._id === t._id) ? '#e67e22' : 'white', 
+                }} style={{ padding: '10px 20px', borderRadius: '30px', border: '1px solid #eee', cursor: t.agotado ? 'not-allowed' : 'pointer',
+                opacity: t.agotado ? 0.45 : 1,
+                background: order.toppings.some(item => item._id === t._id) ? '#e67e22' : 'white',
                 color: order.toppings.some(item => item._id === t._id) ? 'white' : '#2c3e50' }}>
-                  {t.name}
+                  {t.name}{t.agotado && " (Agotado)"}
                 </button>
               ))}
             </div>

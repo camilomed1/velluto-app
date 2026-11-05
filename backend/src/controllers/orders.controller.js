@@ -42,6 +42,10 @@ export const createOrder = async (req, res) => {
             const toppings = toppingIds.map(id => buscar(id, 'topping'))
             if (toppings.includes(undefined)) return res.status(400).json({ message: "Topping no válido o no disponible" })
 
+            // No se puede pedir nada que esté agotado
+            const agotado = [base, ...sabores, ...toppings].find(p => p.agotado)
+            if (agotado) return res.status(400).json({ message: `Lo sentimos, ${agotado.name} está agotado` })
+
             const price = base.price
                 + sabores.reduce((acc, s) => acc + s.price, 0)
                 + toppings.reduce((acc, t) => acc + t.price, 0)

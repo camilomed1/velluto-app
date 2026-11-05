@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Hero } from "../components/Hero";
 import { FlavorCard } from "../components/FlavorCard";
 import { useProducts } from "../context/ProductsContext";
+import { imageUrl } from "../../api/api";
 
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -251,7 +252,7 @@ export function Home() {
                     name={flavor.name}
                     description={flavor.description}
                     price={flavor.price} 
-                    image={flavor.image} 
+                    image={imageUrl(flavor.image)} 
                   />
                 </SwiperSlide>
               ))}

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useProducts } from "../context/ProductsContext";
@@ -430,6 +430,7 @@ export function Ordenar({ cart, setCart }) {
   const [categoria, setCategoria] = useState("Todos");
   const [notification, setNotification] = useState({ message: "", type: "success" });
   const navigate = useNavigate();
+  const location = useLocation();
   const { sabores, bases, toppings, categorias } = useProducts();
 
   useGSAP(() => {
@@ -451,6 +452,19 @@ export function Ordenar({ cart, setCart }) {
   };
 
   const saborById = (id) => sabores.find((s) => s._id === id);
+
+  // Si viene de la página Sabores, empezamos con ese sabor como primera bola
+  useEffect(() => {
+    const id = location.state?.sabor;
+    if (!id || sabores.length === 0) return;
+    const s = saborById(id);
+    if (s && !s.agotado) {
+      setOrder((o) => (o.flavors.length === 0 ? { ...o, flavors: [id] } : o));
+      showToast(`${s.name} agregado. Ahora elige tu base`);
+    }
+    // Limpiamos el estado para que no se vuelva a agregar al recargar
+    navigate(location.pathname, { replace: true, state: null });
+  }, [sabores, location.state]);
 
   // Cada toque en un sabor agrega una bola (se puede repetir el mismo sabor)
   const addFlavor = (s) => {

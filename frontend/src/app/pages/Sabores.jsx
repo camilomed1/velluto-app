@@ -35,7 +35,7 @@ const SearchInput = styled.input`
 
   &:focus {
     border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 15px rgba(230, 126, 34, 0.15);
+    box-shadow: 0 0 15px rgba(201, 126, 90, 0.15);
   }
 `;
 
@@ -129,18 +129,54 @@ const FlavorItemCard = styled.div`
       transform: translateY(20px);
       transition: transform 0.4s ease 0.2s;
     }
+
+    .order-hint {
+      margin-top: 1rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      font-size: 0.85rem;
+      font-weight: 600;
+      transform: translateY(20px);
+      transition: transform 0.4s ease 0.3s;
+    }
   }
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     .image-container img {
       transform: scale(1.1);
     }
     .info-overlay {
       opacity: 1;
-      h3, p, .price-tag {
+      h3, p, .price-tag, .order-hint {
         transform: translateY(0);
       }
     }
+  }
+
+  &:focus-visible {
+    outline: 3px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 3px;
+  }
+`;
+
+// Botón con el terracota del tema (antes usaba otro naranja)
+const CTAButton = styled.button`
+  padding: 1.2rem 2.5rem;
+  border-radius: 50px;
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: bold;
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.3s;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.dark};
+    transform: scale(1.05);
   }
 `;
 
@@ -170,6 +206,12 @@ const OrderCTA = styled.div`
 
 export function Sabores() {
   const navigate = useNavigate();
+
+  // Lleva a Ordenar con este sabor ya agregado como primera bola
+  const pedir = (flavor) => {
+    if (flavor.agotado) return;
+    navigate("/ordenar", { state: { sabor: flavor._id } });
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("Todos");
 
@@ -220,7 +262,14 @@ export function Sabores() {
       <FlavorsGrid>
         {filteredFlavors.map((flavor) => (
           <div key={flavor._id} className="flavor-item-anim">
-            <FlavorItemCard>
+            <FlavorItemCard
+              role="button"
+              tabIndex={flavor.agotado ? -1 : 0}
+              aria-label={flavor.agotado ? `${flavor.name} (agotado)` : `Pedir ${flavor.name}`}
+              style={flavor.agotado ? { cursor: "not-allowed" } : undefined}
+              onClick={() => pedir(flavor)}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), pedir(flavor))}
+            >
               {flavor.agotado && <SoldOutBadge>Agotado</SoldOutBadge>}
               <div className="image-container" style={flavor.agotado ? { filter: "grayscale(0.7)" } : undefined}>
                 <img src={imageUrl(flavor.image)} alt={flavor.name} />
@@ -235,6 +284,7 @@ export function Sabores() {
                         maximumFractionDigits: 0 
                     }).format(flavor.price)}
                 </div>
+                <span className="order-hint">{flavor.agotado ? "Agotado por ahora" : "Toca para pedir"}</span>
               </div>
             </FlavorItemCard>
           </div>
@@ -243,24 +293,9 @@ export function Sabores() {
 
       <OrderCTA>
         <h2 style={{ marginBottom: '1.5rem' }}>¿Quieres algo personalizado?</h2>
-        <button 
-          onClick={() => navigate("/ordenar")}
-          style={{
-            padding: '1.2rem 2.5rem',
-            borderRadius: '50px',
-            background: '#e67e22',
-            color: 'white',
-            border: 'none',
-            fontSize: '1.1rem',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            transition: '0.3s'
-          }}
-          onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-          onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-        >
+        <CTAButton onClick={() => navigate("/ordenar")}>
           ¡Armar mi Helado!
-        </button>
+        </CTAButton>
       </OrderCTA>   
     </PageWrapper>
   );

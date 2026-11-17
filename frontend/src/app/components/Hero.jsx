@@ -68,12 +68,12 @@ const CTA = styled.button`
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+  box-shadow: 0 4px 15px rgba(201, 126, 90, 0.3);
 
   &:hover {
     transform: translateY(-3px);
     filter: brightness(1.1);
-    box-shadow: 0 8px 25px rgba(230, 126, 34, 0.4);
+    box-shadow: 0 8px 25px rgba(201, 126, 90, 0.4);
   }
 
   &:active {

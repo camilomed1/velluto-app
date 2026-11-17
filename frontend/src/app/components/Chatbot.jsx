@@ -93,7 +93,7 @@ const FloatingButton = styled.button`
   border-radius: 50%;
   cursor: pointer;
   font-size: 1.6rem;
-  box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4);
+  box-shadow: 0 5px 15px rgba(201, 126, 90, 0.4);
 `;
 
 

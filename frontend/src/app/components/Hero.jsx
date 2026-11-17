@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import heroImage from '../../assets/hero.png';
+import heroImage from '../../assets/hero-nuevo.jpg';
 
 const HeroContainer = styled.section`
   min-height: 88vh;
@@ -16,6 +16,11 @@ const HeroContainer = styled.section`
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  /* En celular la foto se recorta; la movemos para que se vea el helado */
+  @media (max-width: 768px) {
+    background-position: 72% center;
+  }
   position: relative;
   display: flex;
   align-items: center;
@@ -96,9 +101,11 @@ export function Hero() {
     });
 
     
-    gsap.fromTo(containerRef.current, 
-      { backgroundScale: 1.1 }, 
-      { backgroundPosition: "center", duration: 2 }
+    // En celular la foto se corre a la derecha para que se vea el helado
+    const posicion = window.matchMedia("(max-width: 768px)").matches ? "72% center" : "center";
+    gsap.fromTo(containerRef.current,
+      { backgroundScale: 1.1 },
+      { backgroundPosition: posicion, duration: 2 }
     );
   }, { scope: containerRef });
 

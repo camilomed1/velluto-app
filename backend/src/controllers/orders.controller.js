@@ -1,5 +1,6 @@
 import Order from '../models/order.model.js'
 import Product from '../models/product.model.js'
+import User from '../models/user.model.js'
 import { COSTO_ENVIO, MAX_TOPPINGS } from '../config.js'
 
 const ESTADOS = ['pendiente', 'preparando', 'en camino', 'entregado', 'cancelado']
@@ -113,13 +114,38 @@ export const updateOrderStatus = async (req, res) => {
     try {
         if (!ESTADOS.includes(status)) return res.status(400).json({ message: "Estado no válido" })
 
-        // Si el pedido vuelve a pendiente o preparando, queda libre para que otro domiciliario lo tome
-        const cambios = ['pendiente', 'preparando'].includes(status) ? { status, domiciliario: null } : { status }
-
-        const order = await Order.findByIdAndUpdate(req.params.id, cambios, { new: true })
+        const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true })
             .populate('user', 'username email')
             .populate('domiciliario', 'username telefono')
         if (!order) return res.status(404).json({ message: "Pedido no encontrado" })
+        return res.json(order)
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+// Admin: asignar o cambiar el domiciliario (null = sin asignar)
+export const assignDomiciliario = async (req, res) => {
+    const { domiciliario } = req.body
+
+    try {
+        const order = await Order.findById(req.params.id)
+        if (!order) return res.status(404).json({ message: "Pedido no encontrado" })
+        if (['entregado', 'cancelado'].includes(order.status)) return res.status(400).json({ message: "No se puede cambiar el domiciliario de un pedido terminado" })
+
+        if (domiciliario) {
+            const existe = await User.exists({ _id: domiciliario, rol: 'domiciliario' })
+            if (!existe) return res.status(400).json({ message: "Domiciliario no válido" })
+        } else if (order.status === 'en camino') {
+            return res.status(400).json({ message: "Un pedido en camino necesita un domiciliario" })
+        }
+
+        order.domiciliario = domiciliario || null
+        await order.save()
+        await order.populate([
+            { path: 'user', select: 'username email' },
+            { path: 'domiciliario', select: 'username telefono' }
+        ])
         return res.json(order)
     } catch (error) {
         return res.status(500).json({ message: error.message })

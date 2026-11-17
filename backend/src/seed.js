@@ -4,6 +4,7 @@ import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 import { connectDB } from './db.js'
 import Product from './models/product.model.js'
+import Category from './models/category.model.js'
 import User from './models/user.model.js'
 import { SABORES, BASES, TOPPINGS } from './data/productos.js'
 
@@ -36,6 +37,11 @@ const seed = async () => {
     }))
 
     await Product.insertMany([...sabores, ...bases, ...toppings])
+
+    // Categorías de los sabores iniciales (no borra las que creó el admin)
+    for (const name of [...new Set(SABORES.map(s => s.category))]) {
+        await Category.updateOne({ name }, { $setOnInsert: { name } }, { upsert: true })
+    }
     console.log(`Productos creados: ${sabores.length} sabores, ${bases.length} bases, ${toppings.length} toppings`)
 
     const email = process.env.ADMIN_EMAIL

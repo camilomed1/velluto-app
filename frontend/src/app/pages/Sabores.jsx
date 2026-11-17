@@ -173,9 +173,9 @@ export function Sabores() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("Todos");
 
-  const categorias = ["Todos", "Cremosos", "Frutales", "Clásicos", "Premium"];
-
-  const { sabores } = useProducts();
+  const { sabores, categorias: listaCategorias } = useProducts();
+  // Las categorías las crea el admin; solo mostramos las que tienen sabores
+  const categorias = ["Todos", ...listaCategorias.filter((c) => sabores.some((s) => s.category === c.name)).map((c) => c.name)];
   const filteredFlavors = sabores.filter(flavor => {
     const matchesSearch = flavor.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = activeCategory === "Todos" || flavor.category === activeCategory;

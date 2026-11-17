@@ -6,7 +6,9 @@ const theme = {
     dark: "#7A5A46",        // Canela
     text: "#2F2F2F",        // Carbón
     white: "#FFFFFF",
-    border: "#E6D7C8"
+    border: "#E6D7C8",
+    success: "#6E8B5A",      // Verde salvia (pedidos entregados)
+    successLight: "#EEF3E8"  // Fondo verde suave
   },
 
   fonts: {

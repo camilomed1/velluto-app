@@ -68,3 +68,12 @@ export const completeDeliveryRequest = (id) => request(`/entregas/${id}/entregar
 export const getDomiciliariosRequest = () => request("/usuarios/domiciliarios");
 export const createDomiciliarioRequest = (data) => request("/usuarios/domiciliarios", { method: "POST", body: data });
 export const deleteDomiciliarioRequest = (id) => request(`/usuarios/domiciliarios/${id}`, { method: "DELETE" });
+
+// Categorías de sabores
+export const getCategoriesRequest = () => request("/categorias");
+export const createCategoryRequest = (name) => request("/categorias", { method: "POST", body: { name } });
+export const updateCategoryRequest = (id, name) => request(`/categorias/${id}`, { method: "PUT", body: { name } });
+export const deleteCategoryRequest = (id) => request(`/categorias/${id}`, { method: "DELETE" });
+
+// Admin: asignar domiciliario a un pedido (null = sin asignar)
+export const assignDomiciliarioRequest = (id, domiciliario) => request(`/ordenes/${id}/domiciliario`, { method: "PUT", body: { domiciliario } });

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createOrder, getMyOrders, getOrders, updateOrderStatus } from "../controllers/orders.controller.js";
+import { createOrder, getMyOrders, getOrders, updateOrderStatus, assignDomiciliario } from "../controllers/orders.controller.js";
 import { authRequired, authOptional } from '../middlewares/validateToken.js'
 import { adminRequired } from '../middlewares/isAdmin.js'
 
@@ -9,5 +9,6 @@ router.post('/ordenes', authOptional, createOrder)
 router.get('/ordenes/mias', authRequired, getMyOrders)
 router.get('/ordenes', authRequired, adminRequired, getOrders)
 router.put('/ordenes/:id/estado', authRequired, adminRequired, updateOrderStatus)
+router.put('/ordenes/:id/domiciliario', authRequired, adminRequired, assignDomiciliario)
 
 export default router

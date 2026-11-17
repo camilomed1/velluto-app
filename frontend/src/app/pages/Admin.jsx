@@ -10,11 +10,15 @@ import {
   uploadImageRequest,
   imageUrl,
   getDomiciliariosRequest,
+  assignDomiciliarioRequest,
+  createCategoryRequest,
+  updateCategoryRequest,
+  deleteCategoryRequest,
   createDomiciliarioRequest,
   deleteDomiciliarioRequest,
 } from "../../api/api";
 import { useProducts } from "../context/ProductsContext";
-import { OrderCard, formatCOP } from "../components/OrderCard";
+import { OrderCard, formatCOP, statusColors } from "../components/OrderCard";
 
 const ESTADOS = ["pendiente", "preparando", "en camino", "entregado", "cancelado"];
 const TIPOS = [
@@ -22,7 +26,6 @@ const TIPOS = [
   { value: "base", label: "Bases", singular: "base" },
   { value: "topping", label: "Toppings", singular: "topping" },
 ];
-const CATEGORIAS = ["Clásicos", "Cremosos", "Frutales", "Premium"];
 
 // ---------- Estilos (mismos colores y formas del resto de la página) ----------
 
@@ -159,6 +162,12 @@ const Button = styled.button`
   &:hover {
     background: ${({ theme, $light }) => ($light ? theme.colors.background : theme.colors.dark)};
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: ${({ theme, $light }) => ($light ? "white" : theme.colors.primary)};
+  }
 `;
 
 const ProductRow = styled.div`
@@ -174,6 +183,22 @@ const ProductRow = styled.div`
 
   @media (max-width: 700px) {
     grid-template-columns: 1fr 120px;
+  }
+`;
+
+// Selector pequeño de categoría dentro de la fila del sabor
+const CategorySelect = styled.select`
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.colors.dark};
+  cursor: pointer;
+  text-decoration: underline dotted;
+
+  &:focus {
+    outline: 1px solid ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -248,61 +273,251 @@ const Message = styled.p`
 
 // ---------- Pedidos ----------
 
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 2rem;
+`;
+
+// Cada cuadro es un filtro: muestra cuántos pedidos hay en ese estado
+const StatTile = styled.button`
+  text-align: left;
+  padding: 1rem 1.1rem;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ $active, theme }) => ($active ? theme.colors.background : "white")};
+  border: 2px solid ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.border)};
+  border-left: 6px solid ${({ $status, theme }) => ($status ? statusColors($status, theme).bg : theme.colors.primary)};
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.2s ease;
+
+  strong {
+    display: block;
+    font-family: ${({ theme }) => theme.fonts.title};
+    font-size: 1.6rem;
+    color: ${({ theme }) => theme.colors.text};
+  }
+
+  span {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: ${({ theme }) => theme.colors.dark};
+  }
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const OrderPanel = styled.div`
+  margin-top: 1.2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+`;
+
+const InfoBlock = styled.div`
+  label,
+  > span {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: ${({ theme }) => theme.colors.primary};
+    margin-bottom: 0.3rem;
+  }
+
+  strong {
+    display: block;
+    color: ${({ theme }) => theme.colors.text};
+  }
+
+  small {
+    display: block;
+    color: ${({ theme }) => theme.colors.dark};
+  }
+
+  a {
+    color: ${({ theme }) => theme.colors.dark};
+  }
+
+  select {
+    width: 100%;
+  }
+`;
+
+const ActionsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+`;
+
+const Hint = styled.small`
+  color: ${({ theme }) => theme.colors.dark};
+`;
+
+// Siguiente paso de cada estado (lo que el admin normalmente hace después)
+const SIGUIENTE = {
+  pendiente: { status: "preparando", label: "Empezar a preparar" },
+  preparando: { status: "en camino", label: "Enviar al domicilio" },
+  "en camino": { status: "entregado", label: "Marcar entregado" },
+};
+
+const FILTROS = [
+  { key: "activos", label: "Activos" },
+  { key: "pendiente", label: "Pendientes" },
+  { key: "preparando", label: "Preparando" },
+  { key: "en camino", label: "En camino" },
+  { key: "entregado", label: "Entregados" },
+  { key: "cancelado", label: "Cancelados" },
+  { key: "todos", label: "Todos" },
+];
+
+const ACTIVOS = ["pendiente", "preparando", "en camino"];
+
 function PedidosTab() {
   const [orders, setOrders] = useState([]);
-  const [filtro, setFiltro] = useState("todos");
+  const [domis, setDomis] = useState([]);
+  const [filtro, setFiltro] = useState("activos");
   const [error, setError] = useState("");
 
+  const load = () =>
+    Promise.all([getOrdersRequest(), getDomiciliariosRequest()])
+      .then(([o, d]) => {
+        setOrders(o);
+        setDomis(d);
+      })
+      .catch((err) => setError(err.message));
+
+  // Se actualiza solo cada 30 segundos para ver pedidos nuevos
   useEffect(() => {
-    getOrdersRequest().then(setOrders).catch((err) => setError(err.message));
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  const changeStatus = async (id, status) => {
+  const replace = (updated) => setOrders((list) => list.map((o) => (o._id === updated._id ? updated : o)));
+
+  const changeStatus = async (order, status) => {
+    setError("");
+    if (status === "en camino" && !order.domiciliario) return setError(`Asigna un domiciliario al pedido ${order.orderNumber} antes de enviarlo`);
+    if (status === "cancelado" && !window.confirm(`¿Cancelar el pedido ${order.orderNumber}?`)) return;
     try {
-      const updated = await updateOrderStatusRequest(id, status);
-      setOrders(orders.map((o) => (o._id === id ? updated : o)));
+      replace(await updateOrderStatusRequest(order._id, status));
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const visibles = filtro === "todos" ? orders : orders.filter((o) => o.status === filtro);
+  const changeDomiciliario = async (order, domiciliario) => {
+    setError("");
+    try {
+      replace(await assignDomiciliarioRequest(order._id, domiciliario || null));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const contar = (key) =>
+    key === "todos" ? orders.length : key === "activos" ? orders.filter((o) => ACTIVOS.includes(o.status)).length : orders.filter((o) => o.status === key).length;
+
+  const visibles = orders.filter((o) => (filtro === "todos" ? true : filtro === "activos" ? ACTIVOS.includes(o.status) : o.status === filtro));
+  // En los activos, primero los que llevan más tiempo esperando
+  if (filtro === "activos") visibles.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
   return (
     <>
-      <Tabs>
-        {["todos", ...ESTADOS].map((e) => (
-          <TabBtn key={e} $active={filtro === e} onClick={() => setFiltro(e)}>
-            {e.charAt(0).toUpperCase() + e.slice(1)} ({e === "todos" ? orders.length : orders.filter((o) => o.status === e).length})
-          </TabBtn>
+      <StatsGrid>
+        {FILTROS.map((f) => (
+          <StatTile key={f.key} $active={filtro === f.key} $status={ESTADOS.includes(f.key) ? f.key : null} onClick={() => setFiltro(f.key)}>
+            <strong>{contar(f.key)}</strong>
+            <span>{f.label}</span>
+          </StatTile>
         ))}
-      </Tabs>
+      </StatsGrid>
 
       {error && <Message>{error}</Message>}
-      {visibles.length === 0 && !error && <Message>No hay pedidos.</Message>}
+      {visibles.length === 0 && !error && (
+        <Panel>
+          <Message>{filtro === "activos" ? "No hay pedidos activos. ¡Todo al día!" : "No hay pedidos en esta lista."}</Message>
+        </Panel>
+      )}
 
       <List>
-        {visibles.map((order) => (
-          <OrderCard
-            key={order._id}
-            order={order}
-            extra={
-              <Extra>
-                <div>
-                  Cliente: <strong>{order.delivery.nombre || order.user?.username}</strong> · Tel: {order.delivery.telefono} · {order.user ? `Cuenta: ${order.user.email}` : "Sin cuenta"}
-                  {order.domiciliario && (
-                    <div>Domiciliario: <strong>{order.domiciliario.username}</strong>{order.domiciliario.telefono && ` · Tel: ${order.domiciliario.telefono}`}</div>
+        {visibles.map((order) => {
+          const terminado = ["entregado", "cancelado"].includes(order.status);
+          const siguiente = SIGUIENTE[order.status];
+          const faltaDomi = siguiente?.status === "en camino" && !order.domiciliario;
+
+          return (
+            <OrderCard
+              key={order._id}
+              order={order}
+              onStepClick={(status) => changeStatus(order, status)}
+              extra={
+                <OrderPanel>
+                  <InfoGrid>
+                    <InfoBlock>
+                      <span>Cliente</span>
+                      <strong>{order.delivery.nombre || order.user?.username}</strong>
+                      <small>
+                        Tel: <a href={`tel:${order.delivery.telefono}`}>{order.delivery.telefono}</a>
+                      </small>
+                      <small>{order.user ? `Cuenta: ${order.user.email}` : "Pidió sin cuenta"}</small>
+                    </InfoBlock>
+
+                    <InfoBlock>
+                      <label htmlFor={`domi-${order._id}`}>Domiciliario</label>
+                      {terminado ? (
+                        <strong>{order.domiciliario?.username || "Sin domiciliario"}</strong>
+                      ) : (
+                        <Select
+                          id={`domi-${order._id}`}
+                          value={order.domiciliario?._id || ""}
+                          onChange={(e) => changeDomiciliario(order, e.target.value)}
+                        >
+                          <option value="">Sin asignar</option>
+                          {domis.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.username}
+                              {d.telefono && ` · ${d.telefono}`}
+                            </option>
+                          ))}
+                        </Select>
+                      )}
+                      {!terminado && domis.length === 0 && <small>Crea domiciliarios en la pestaña Domiciliarios.</small>}
+                    </InfoBlock>
+                  </InfoGrid>
+
+                  {!terminado && (
+                    <ActionsRow>
+                      {siguiente && (
+                        <Button onClick={() => changeStatus(order, siguiente.status)} disabled={faltaDomi}>
+                          {siguiente.label}
+                        </Button>
+                      )}
+                      <Button $light onClick={() => changeStatus(order, "cancelado")}>
+                        Cancelar pedido
+                      </Button>
+                      {faltaDomi && <Hint>Asigna un domiciliario para enviarlo.</Hint>}
+                    </ActionsRow>
                   )}
-                </div>
-                <Select value={order.status} onChange={(e) => changeStatus(order._id, e.target.value)}>
-                  {ESTADOS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </Select>
-              </Extra>
-            }
-          />
-        ))}
+                </OrderPanel>
+              }
+            />
+          );
+        })}
       </List>
     </>
   );
@@ -310,10 +525,10 @@ function PedidosTab() {
 
 // ---------- Productos ----------
 
-const EMPTY_PRODUCT = { tipo: "sabor", name: "", price: "", category: "Clásicos", description: "", image: "", color: "" };
+const EMPTY_PRODUCT = { tipo: "sabor", name: "", price: "", category: "", description: "", image: "", color: "" };
 
 function ProductosTab() {
-  const { reload } = useProducts();
+  const { reload, categorias } = useProducts();
   const [products, setProducts] = useState([]);
   const [tipo, setTipo] = useState("sabor");
   const [nuevo, setNuevo] = useState(EMPTY_PRODUCT);
@@ -411,8 +626,9 @@ function ProductosTab() {
               <>
                 <div>
                   <label>Categoría</label>
-                  <Select name="category" value={nuevo.category} onChange={change} style={{ width: "100%" }}>
-                    {CATEGORIAS.map((c) => <option key={c}>{c}</option>)}
+                  <Select name="category" value={nuevo.category} onChange={change} style={{ width: "100%" }} required>
+                    <option value="">Elige...</option>
+                    {categorias.map((c) => <option key={c._id}>{c.name}</option>)}
                   </Select>
                 </div>
                 <div style={{ gridColumn: "span 2" }}>
@@ -462,7 +678,18 @@ function ProductosTab() {
                   <div>
                     <strong>{p.name}</strong>
                     <small>
-                      {p.category || formatCOP(p.price)}
+                      {p.tipo === "sabor" ? (
+                        <CategorySelect
+                          value={p.category}
+                          onChange={(e) => run(() => updateProductRequest(p._id, { category: e.target.value }))}
+                          title="Cambiar categoría"
+                        >
+                          {!categorias.some((c) => c.name === p.category) && <option value={p.category}>{p.category || "Sin categoría"}</option>}
+                          {categorias.map((c) => <option key={c._id}>{c.name}</option>)}
+                        </CategorySelect>
+                      ) : (
+                        formatCOP(p.price)
+                      )}
                       {p.agotado && " · Agotado"}
                       {!p.disponible && " · Oculto"}
                     </small>
@@ -503,6 +730,92 @@ function ProductosTab() {
         </Panel>
       </List>
     </>
+  );
+}
+
+// ---------- Categorías ----------
+
+function CategoriasTab() {
+  const { categorias, reload } = useProducts();
+  const [nombre, setNombre] = useState("");
+  // Nombres editados que todavía no se guardan: { [id]: "nuevo nombre" }
+  const [editando, setEditando] = useState({});
+  const [error, setError] = useState("");
+
+  const run = async (action) => {
+    setError("");
+    try {
+      await action();
+      await reload();
+      return true;
+    } catch (err) {
+      setError(err.message);
+      return false;
+    }
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (await run(() => createCategoryRequest(nombre))) setNombre("");
+  };
+
+  const handleRename = async (c) => {
+    const ok = await run(() => updateCategoryRequest(c._id, editando[c._id]));
+    if (ok) setEditando(({ [c._id]: _, ...resto }) => resto);
+  };
+
+  const handleDelete = (c) => {
+    if (!window.confirm(`¿Eliminar la categoría "${c.name}"?`)) return;
+    run(() => deleteCategoryRequest(c._id));
+  };
+
+  return (
+    <List>
+      {error && <Message>{error}</Message>}
+
+      <Panel>
+        <h3>Agregar categoría</h3>
+        <FormGrid onSubmit={handleCreate}>
+          <div>
+            <label>Nombre</label>
+            <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Temporada, Sin azúcar" required />
+          </div>
+          <Button type="submit">Agregar</Button>
+        </FormGrid>
+      </Panel>
+
+      <Panel>
+        <h3>Categorías de sabores</h3>
+        <Message style={{ textAlign: "left", padding: "0 0 0.5rem" }}>
+          Las categorías se usan para filtrar el menú. Solo se puede eliminar una categoría que no tenga sabores.
+        </Message>
+        {categorias.length === 0 && <Message>No hay categorías todavía.</Message>}
+        {categorias.map((c) => {
+          const valor = editando[c._id] ?? c.name;
+          const cambiado = valor.trim() !== c.name;
+          return (
+            <ProductRow key={c._id} style={{ gridTemplateColumns: "1fr auto" }}>
+              <NameCell>
+                <Input
+                  value={valor}
+                  onChange={(e) => setEditando({ ...editando, [c._id]: e.target.value })}
+                  onKeyDown={(e) => e.key === "Enter" && cambiado && handleRename(c)}
+                  style={{ maxWidth: "260px" }}
+                  aria-label={`Nombre de la categoría ${c.name}`}
+                />
+                <small>{c.sabores} {c.sabores === 1 ? "sabor" : "sabores"}</small>
+              </NameCell>
+              <RowActions>
+                {cambiado && <Button onClick={() => handleRename(c)}>Guardar</Button>}
+                <Button $light onClick={() => handleDelete(c)} disabled={c.sabores > 0} title={c.sabores > 0 ? "Tiene sabores" : undefined}>
+                  Eliminar
+                </Button>
+              </RowActions>
+            </ProductRow>
+          );
+        })}
+      </Panel>
+    </List>
   );
 }
 
@@ -598,6 +911,7 @@ function DomiciliariosTab() {
 const SECCIONES = [
   { key: "pedidos", label: "Pedidos" },
   { key: "productos", label: "Productos" },
+  { key: "categorias", label: "Categorías" },
   { key: "domiciliarios", label: "Domiciliarios" },
 ];
 
@@ -619,6 +933,7 @@ export function Admin() {
 
       {seccion === "pedidos" && <PedidosTab />}
       {seccion === "productos" && <ProductosTab />}
+      {seccion === "categorias" && <CategoriasTab />}
       {seccion === "domiciliarios" && <DomiciliariosTab />}
     </PageWrapper>
   );

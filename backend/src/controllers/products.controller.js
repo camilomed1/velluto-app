@@ -1,4 +1,5 @@
 import Product from '../models/product.model.js'
+import Category from '../models/category.model.js'
 import { deleteUploadedImage } from '../middlewares/upload.js'
 
 const TIPOS = ['sabor', 'base', 'topping']
@@ -34,6 +35,7 @@ export const createProduct = async (req, res) => {
     try {
         if (!TIPOS.includes(tipo)) return res.status(400).json({ message: "El tipo debe ser sabor, base o topping" })
         if (!name || price === undefined) return res.status(400).json({ message: "Nombre y precio son obligatorios" })
+        if (tipo === 'sabor' && !(await Category.exists({ name: category }))) return res.status(400).json({ message: "Elige una categoría válida" })
 
         const newProduct = new Product({ tipo, name, description, price, category, image, color, disponible, agotado })
         const productSaved = await newProduct.save()
@@ -47,6 +49,7 @@ export const updateProduct = async (req, res) => {
     try {
         const anterior = await Product.findById(req.params.id)
         if (!anterior) return res.status(404).json({ message: "Producto no encontrado" })
+        if (req.body.category !== undefined && !(await Category.exists({ name: req.body.category }))) return res.status(400).json({ message: "Elige una categoría válida" })
 
         const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
 

@@ -10,7 +10,7 @@ export const getAvailableDeliveries = async (req, res) => {
     }
 }
 
-// Pedidos del domiciliario logueado (en camino y entregados)
+// Pedidos del domiciliario logueado (asignados, en camino y entregados)
 export const getMyDeliveries = async (req, res) => {
     try {
         const orders = await Order.find({ domiciliario: req.user.id }).sort({ updatedAt: -1 })
@@ -20,11 +20,12 @@ export const getMyDeliveries = async (req, res) => {
     }
 }
 
-// Tomar un pedido: solo funciona si sigue disponible (evita que dos lo tomen a la vez)
+// Salir a entregar: el pedido debe estar "preparando" y estar libre o asignado a este domiciliario.
+// La condición va en la misma consulta para que dos domiciliarios no tomen el mismo pedido.
 export const takeDelivery = async (req, res) => {
     try {
         const order = await Order.findOneAndUpdate(
-            { _id: req.params.id, status: 'preparando', domiciliario: null },
+            { _id: req.params.id, status: 'preparando', domiciliario: { $in: [null, req.user.id] } },
             { domiciliario: req.user.id, status: 'en camino' },
             { new: true }
         )

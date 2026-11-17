@@ -1,4 +1,5 @@
 import User from '../models/user.model.js'
+import Order from '../models/order.model.js'
 import bcrypt from 'bcryptjs'
 import { userResponse } from './auth.controller.js'
 
@@ -170,6 +171,11 @@ export const deleteDomiciliario = async (req, res) => {
     try {
         const user = await User.findOneAndDelete({ _id: req.params.id, rol: 'domiciliario' })
         if (!user) return res.status(404).json({ message: "Domiciliario no encontrado" })
+
+        // Sus pedidos sin terminar quedan sin asignar; los que iban en camino vuelven a "preparando"
+        await Order.updateMany({ domiciliario: user._id, status: 'en camino' }, { status: 'preparando', domiciliario: null })
+        await Order.updateMany({ domiciliario: user._id, status: { $in: ['pendiente', 'preparando'] } }, { domiciliario: null })
+
         return res.sendStatus(204)
     } catch (error) {
         return res.status(500).json({ message: error.message })

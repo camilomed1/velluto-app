@@ -102,6 +102,11 @@ const Button = styled.button`
   }
 `;
 
+const Waiting = styled.span`
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.dark};
+`;
+
 const Empty = styled.div`
   text-align: center;
   padding: 3rem 2rem;
@@ -121,7 +126,7 @@ const Message = styled.p`
 
 const SECCIONES = [
   { key: "disponibles", label: "Disponibles" },
-  { key: "camino", label: "En camino" },
+  { key: "mias", label: "Mis entregas" },
   { key: "entregadas", label: "Entregadas" },
 ];
 
@@ -165,14 +170,15 @@ export function Entregas() {
     }
   };
 
-  const enCamino = mias.filter((o) => o.status === "en camino");
+  // Asignados por el admin o tomados por el domiciliario, sin terminar
+  const enCurso = mias.filter((o) => ["pendiente", "preparando", "en camino"].includes(o.status));
   const entregadas = mias.filter((o) => o.status === "entregado");
-  const lista = seccion === "disponibles" ? disponibles : seccion === "camino" ? enCamino : entregadas;
-  const conteo = { disponibles: disponibles.length, camino: enCamino.length, entregadas: entregadas.length };
+  const lista = seccion === "disponibles" ? disponibles : seccion === "mias" ? enCurso : entregadas;
+  const conteo = { disponibles: disponibles.length, mias: enCurso.length, entregadas: entregadas.length };
 
   const vacio = {
     disponibles: "No hay pedidos listos para entregar en este momento.",
-    camino: "No tienes entregas en camino.",
+    mias: "No tienes entregas asignadas.",
     entregadas: "Todavía no has entregado pedidos.",
   };
 
@@ -204,11 +210,17 @@ export function Entregas() {
                   <a href={`tel:${order.delivery.telefono}`}>{order.delivery.telefono}</a>
                 </div>
                 {seccion === "disponibles" && (
-                  <Button disabled={busy === order._id} onClick={() => accion(order._id, takeDeliveryRequest, "camino")}>
+                  <Button disabled={busy === order._id} onClick={() => accion(order._id, takeDeliveryRequest, "mias")}>
                     Tomar pedido
                   </Button>
                 )}
-                {seccion === "camino" && (
+                {seccion === "mias" && order.status === "pendiente" && <Waiting>Esperando que lo empiecen a preparar</Waiting>}
+                {seccion === "mias" && order.status === "preparando" && (
+                  <Button disabled={busy === order._id} onClick={() => accion(order._id, takeDeliveryRequest, "mias")}>
+                    Salir a entregar
+                  </Button>
+                )}
+                {seccion === "mias" && order.status === "en camino" && (
                   <Button disabled={busy === order._id} onClick={() => accion(order._id, completeDeliveryRequest, "entregadas")}>
                     Marcar entregado
                   </Button>

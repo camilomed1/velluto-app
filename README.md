@@ -64,6 +64,7 @@ backend/
     │   ├── validateToken.js  # authRequired / authOptional
     │   ├── isAdmin.js        # adminRequired
     │   ├── isDomiciliario.js # domiciliarioRequired
+    │   ├── canOrder.js       # solo invitados y clientes pueden pedir
     │   └── upload.js         # subida de imágenes (multer)
     ├── models/           # user, product, category, order
     ├── controllers/      # lógica de cada recurso
@@ -112,7 +113,7 @@ Acceso: **Público**, **Sesión** (cualquier usuario logueado), **Admin** o **Do
 
 | Método | Ruta | Acceso | Descripción |
 |---|---|---|---|
-| POST | `/ordenes` | Público | Crear pedido, con o sin cuenta. El backend calcula los precios |
+| POST | `/ordenes` | Público | Crear pedido, con o sin cuenta (solo invitados y clientes: administradores y domiciliarios reciben 403). El backend calcula los precios |
 | GET | `/ordenes/mias` | Sesión | Pedidos del usuario |
 | GET | `/ordenes` | Admin | Todos los pedidos |
 | PUT | `/ordenes/:id/estado` | Admin | Cambiar estado: `pendiente`, `preparando`, `en camino`, `entregado`, `cancelado` |

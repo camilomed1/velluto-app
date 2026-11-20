@@ -2,10 +2,11 @@ import { Router } from "express";
 import { createOrder, getMyOrders, getOrders, updateOrderStatus, assignDomiciliario } from "../controllers/orders.controller.js";
 import { authRequired, authOptional } from '../middlewares/validateToken.js'
 import { adminRequired } from '../middlewares/isAdmin.js'
+import { canOrder } from '../middlewares/canOrder.js'
 
 const router = Router()
 
-router.post('/ordenes', authOptional, createOrder)
+router.post('/ordenes', authOptional, canOrder, createOrder)
 router.get('/ordenes/mias', authRequired, getMyOrders)
 router.get('/ordenes', authRequired, adminRequired, getOrders)
 router.put('/ordenes/:id/estado', authRequired, adminRequired, updateOrderStatus)

@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { DeliverySection } from "../components/DeliverySection";
+import { useAuth } from "../context/AuthContext";
 
 
 const PageWrapper = styled.div`
@@ -46,6 +47,20 @@ const NoticeBanner = styled.div`
 
 
 export function Domicilio({ cart, setCart }) {
+  const { canOrder } = useAuth();
+
+  // Administradores y domiciliarios no pueden hacer pedidos (el backend también lo bloquea)
+  if (!canOrder) {
+    return (
+      <PageWrapper>
+        <IntroBox>
+          <h1>Pedidos solo para clientes</h1>
+          <p>Las cuentas de administrador y domiciliario no pueden hacer pedidos. Para pedir, cierra sesión o entra con una cuenta de cliente.</p>
+        </IntroBox>
+      </PageWrapper>
+    );
+  }
+
   return (
     <PageWrapper>
      

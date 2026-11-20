@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useProducts } from "../context/ProductsContext";
+import { useAuth } from "../context/AuthContext";
 import { imageUrl } from "../../api/api";
 
 const MAX_BOLAS = 3;
@@ -432,6 +433,7 @@ export function Ordenar({ cart, setCart }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { sabores, bases, toppings, categorias } = useProducts();
+  const { user, canOrder } = useAuth();
 
   useGSAP(() => {
     gsap.to(".reveal-section", { opacity: 1, y: 0, stagger: 0.1, duration: 0.8, ease: "power4.out" });
@@ -508,6 +510,19 @@ export function Ordenar({ cart, setCart }) {
   const categoriasConSabores = categorias.filter((c) => sabores.some((s) => s.category === c.name));
   const saboresVisibles = categoria === "Todos" ? sabores : sabores.filter((s) => s.category === categoria);
   const contar = (id) => order.flavors.filter((f) => f === id).length;
+
+  // Administradores y domiciliarios no pueden hacer pedidos (el backend también lo bloquea)
+  if (!canOrder) {
+    return (
+      <PageWrapper>
+        <Title>Pedidos solo para clientes</Title>
+        <Subtitle>Las cuentas de administrador y domiciliario no pueden hacer pedidos. Para pedir, cierra sesión o entra con una cuenta de cliente.</Subtitle>
+        <CheckoutButton style={{ maxWidth: 320, display: "block", margin: "2rem auto 0" }} onClick={() => navigate(user.rol === "admin" ? "/admin" : "/entregas")}>
+          Ir a mi panel
+        </CheckoutButton>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>

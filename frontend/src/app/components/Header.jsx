@@ -146,7 +146,7 @@ export function Header() {
   
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, canOrder, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Cerrar el menú del celular al cambiar de página
@@ -190,7 +190,8 @@ export function Header() {
         </Nav>
 
         <Right>
-          <SpecialLink to="/ordenar">Ordenar</SpecialLink>
+          {/* Administradores y domiciliarios no pueden hacer pedidos */}
+          {canOrder && <SpecialLink to="/ordenar">Ordenar</SpecialLink>}
           <MenuButton onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menú" aria-expanded={menuOpen}>
             {menuOpen ? '✕' : '☰'}
           </MenuButton>
